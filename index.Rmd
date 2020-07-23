@@ -5,7 +5,6 @@ title: "The Presidency"
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
 ```
 
-
 ```{r}
 setwd("~/Desktop")
 
@@ -261,7 +260,7 @@ otherpercentiles <- percentiles(otherstateresults)
 #Chance Map
 chancemap <- plot_usmap(data = simulations, values = "TrumpStateWinProb", color = "black",size=0.55) + 
   scale_fill_gradient2(
-    low = "blue", mid="white",high = "red", name = "% Chance", midpoint=50,label = scales::comma
+    low = "#698DC5", mid="white",high = "#F07763", name = "% Chance", midpoint=50,label = scales::comma
   ) + theme(legend.position = "right")
 
 finalEV <- data.frame("BidenEV"=BidenEVWinVector,
@@ -270,21 +269,21 @@ finalEV <- data.frame("BidenEV"=BidenEVWinVector,
 chancemap
 
 #Histogram
-final_evs.gg <-  ggplot(finalEV,aes(x=BidenEV,
-                                    fill=ifelse(BidenEV>=270,'Democratic','Republican'))) +
+final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
+                                    fill=ifelse(BidenEV>=270,'Biden','Trump'))) +
   geom_vline(xintercept = 270) +
   geom_histogram(binwidth=1) +
   theme_minimal() +
   theme(legend.position = 'top',
         panel.grid.minor = element_blank()) +
-  scale_fill_manual(name='Electoral College winner',values=c('Biden'='blue','Trump'='red'))+
+  scale_fill_manual(name='Electoral College winner',values=c('Biden'='#698DC5','Trump'='#F07763'))+
   labs(x='Democratic electoral college votes',title='A Histogram of Electoral College Outcomes',
        subtitle=sprintf("After 20,000 simulations, Biden wins the electoral college %s percent of times. \nHere are the most likely outcomes.",round(mean(finalEV$BidenEV>=270)*100,3)))
 final_evs.gg
 
+
 #Margin Map
-#party_colors <- c("#698DC5","#F07763") 
-party_colors <- c("blue","red") 
+party_colors <- c("#698DC5","#F07763") 
 
 p0 <- ggplot(data = simulations,
              mapping = aes(x = TrumpStateWinProb,
@@ -358,10 +357,10 @@ spatialdata@data$hoverText <- mapply(
               <span style='float:left'>Biden</span>
               <span style='float:right'>Trump</span>
               <br/>
-              <span style='color:blue;float:left'>%s%%</span>
-              <span style='color:red;float:right'>%s%%</span><br clear='all'/>
-              <span style='background:blue;width:%s%%;float:left'>&nbsp;</span>
-              <span style='background:red;width:%s%%;float:right'>&nbsp;</span>
+              <span style='color:#698DC5;float:left'>%s%%</span>
+              <span style='color:#F07763;float:right'>%s%%</span><br clear='all'/>
+              <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
+              <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
             <br/><span style='font-size:10px'>%s Electoral Votes</span>
         </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
@@ -376,7 +375,7 @@ spatialdata@data$hoverText <- mapply(
 
 #Coding the interactive leaflet map
 # Dems are blue and Reps are red.
-factpal <- colorFactor(c("blue", "red"), spatialdata@data$who)
+factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata@data$who)
 
 leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
                                minZoom = -1.5, maxZoom = -1.5,
@@ -439,10 +438,10 @@ spatialdata2@data$hoverText <- mapply(
               <span style='float:left'>Biden</span>
               <span style='float:right'>Trump</span>
               <br/>
-              <span style='color:blue;float:left'>%s%%</span>
-              <span style='color:red;float:right'>%s%%</span><br clear='all'/>
-              <span style='background:blue;width:%s%%;float:left'>&nbsp;</span>
-              <span style='background:red;width:%s%%;float:right'>&nbsp;</span>
+              <span style='color:#698DC5;float:left'>%s%%</span>
+              <span style='color:#F07763;float:right'>%s%%</span><br clear='all'/>
+              <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
+              <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
             <br/><span style='font-size:10px'>%s Electoral Votes</span>
         </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
@@ -457,7 +456,7 @@ spatialdata2@data$hoverText <- mapply(
 
 #Coding the interactive leaflet map
 # Dems are blue and Reps are red.
-factpal <- colorFactor(c("blue", "red"), spatialdata2@data$who)
+factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata2@data$who)
 
 crs.laea <- leafletCRS(
   crsClass="L.Proj.CRS", code='EPSG:2163',
@@ -493,7 +492,7 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
                                             'border-width' = '4px')),
               highlightOptions = highlightOptions(weight = 3, bringToFront = TRUE)) %>%
   addLegend("bottomright", 
-            colors =c("blue", "red"),
+            colors =c("#698DC5", "#F07763"),
             labels= c("Biden", "Trump"),
             title= "Key",
             opacity = 1) %>%
@@ -520,7 +519,7 @@ marginpercentiles$ymin <- 1:56
 marginpercentiles$ymin <- marginpercentiles$ymin - 0.40
 marginpercentiles$ymax <- marginpercentiles$ymin + 0.80
 
-party_colors <- c("blue","red") 
+party_colors <- c("#698DC5","#F07763") 
 
 p0 <- ggplot(data = marginpercentiles,
              mapping = aes(x = V3,
