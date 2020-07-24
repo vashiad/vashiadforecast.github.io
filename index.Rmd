@@ -1,9 +1,10 @@
 ---
-title: "The Presidency"
+title: "Who will be President?"
 ---
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
 ```
+
 
 ```{r}
 setwd("~/Desktop")
@@ -15,6 +16,10 @@ library(usmap)
 library(maptools)
 library(ggrepel)
 library(haven)
+library(leaflet)
+library(magrittr)
+library(tilegramsR)
+library(shiny)
 
 data <- read.csv("2020forecast.csv")
 
@@ -149,7 +154,7 @@ simulations <- data %>%
   mutate(BidenWin=0) %>%
   mutate(OtherWin=0)
 
-nsims <- 20000
+nsims <- 1000
 
 TrumpEVWinCount <- 0
 BidenEVWinCount <- 0
@@ -228,10 +233,10 @@ BProbability <- (BidenEVWinCount/nsims)*100
 OProbability <- (OtherEVWinCount/nsims)*100
 TieProbability <- (TieEVCount/nsims)*100
 
-paste("Trump wins the Elecoral College",TProbability,"% of times.")
-paste("Biden wins the Elecoral College",BProbability,"% of times.")
-paste("A Third Party Candidate wins the Elecoral College",OProbability,"% of times.")
-paste("No one wins the Elecoral College (Tie)",TieProbability,"% of times.")
+#paste("Trump wins the Elecoral College",TProbability,"% of times.")
+#paste("Biden wins the Elecoral College",BProbability,"% of times.")
+#paste("A Third Party Candidate wins the Elecoral College",OProbability,"% of times.")
+#paste("No one wins the Elecoral College (Tie)",TieProbability,"% of times.")
 
 simulations$TrumpStateWinProb <- (simulations$TrumpWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 simulations$BidenStateWinProb <- (simulations$BidenWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
@@ -257,6 +262,14 @@ bidenpercentiles <- percentiles(bidenstateresults)
 trumppercentiles <- percentiles(trumpstateresults)
 otherpercentiles <- percentiles(otherstateresults)
 
+#knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
+
+htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 750px; float: left;" id="Header">
+<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
+<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
+
+
 #Chance Map
 chancemap <- plot_usmap(data = simulations, values = "TrumpStateWinProb", color = "black",size=0.55) + 
   scale_fill_gradient2(
@@ -266,21 +279,18 @@ chancemap <- plot_usmap(data = simulations, values = "TrumpStateWinProb", color 
 finalEV <- data.frame("BidenEV"=BidenEVWinVector,
                       "TrumpEV"=TrumpEVWinVector)
 
-chancemap
 
 #Histogram
 final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
-                                    fill=ifelse(BidenEV>=270,'Biden','Trump'))) +
+                                    fill=ifelse(BidenEV>=270,'Biden Wins','Trump Wins'))) +
   geom_vline(xintercept = 270) +
   geom_histogram(binwidth=1) +
   theme_minimal() +
   theme(legend.position = 'top',
         panel.grid.minor = element_blank()) +
-  scale_fill_manual(name='Electoral College winner',values=c('Biden'='#698DC5','Trump'='#F07763'))+
+  scale_fill_manual(name='Legend',values=c('Biden Wins'='#698DC5','Trump Wins'='#F07763'))+
   labs(x='Democratic electoral college votes',title='A Histogram of Electoral College Outcomes',
        subtitle=sprintf("After 20,000 simulations, Biden wins the electoral college %s percent of times. \nHere are the most likely outcomes.",round(mean(finalEV$BidenEV>=270)*100,3)))
-final_evs.gg
-
 
 #Margin Map
 party_colors <- c("#698DC5","#F07763") 
@@ -299,10 +309,144 @@ p3 <- p2 + scale_x_continuous(breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 
                               labels = c("0\n (Biden)", "10", "20", "30", "40", "50", "60", "70", "80",
                                          "90", "100\n(Trump)"))
 
-p3 + labs(x = "Chance of Trump Win", y = "State") +
+p4 <- p3 + labs(x = "Chance of Trump Win", y = "State") +
   theme(axis.text=element_text(size=8))
 
+```
 
+```{r}
+
+##### INTERACTIVE MAP ######
+#install.packages("remotes")
+#library(remotes)
+#remotes::install_github("hrbrmstr/albersusa")
+
+#Interactive Leaflet Map
+ensureCranPkg <- function(pkg) {
+  if(!suppressWarnings(requireNamespace(pkg, quietly = TRUE))) {
+    install.packages(pkg)
+  }
+}
+
+ensureCranPkg('devtools')
+ensureCranPkg('purrr')
+ensureCranPkg('dplyr')
+ensureCranPkg('htmlwidgets')
+ensureCranPkg('stringr')
+ensureCranPkg('rvest')
+ensureCranPkg('xml2')
+ensureCranPkg('htmltools')
+
+if(!suppressWarnings(requireNamespace('leaflet',quietly = TRUE)) ||
+   packageVersion('leaflet') < '1.0.2.9006') {
+  devtools::install_github('rstudio/leaflet')
+}
+
+if(!suppressWarnings(requireNamespace('tilegramsR', quietly = TRUE))) {
+  devtools::install_github('bhaskarvk/tilegramsR')
+}
+
+if(!suppressWarnings(requireNamespace('usgazetteer', quietly = TRUE))) {
+  devtools::install_github('bhaskarvk/usgazetteer')
+}
+
+library(albersusa)
+simulations$who=factor(ifelse(simulations$BidenStateWinProb>simulations$TrumpStateWinProb,'D','R'))
+spatialdata2 <- rmapshaper::ms_simplify(albersusa::usa_composite())
+#simulations <- simulations %<>% arrange(state)
+colnames(simulations)[2] <- "iso_3166_2"
+spatialdata2@data %<>% dplyr::left_join(simulations, by=c("iso_3166_2"="iso_3166_2"))
+
+
+# This is our pretty hover content
+spatialdata2@data$hoverText <- mapply(
+  function(st, vts, dem, rep, w) {
+    htmltools::HTML(
+      sprintf("<div style='font-size:12px;width:200px;float:left'>
+            <span style='font-size:18px;font-weight:bold'>%s</span><br/>
+            Chances of Winning<br/>
+            <div style='width:95%%'>
+              <span style='float:left'>Biden</span>
+              <span style='float:right'>Trump</span>
+              <br/>
+              <span style='color:#698DC5;float:left'>%s%%</span>
+              <span style='color:#F07763;float:right'>%s%%</span><br clear='all'/>
+              <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
+              <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
+            </div>
+            <br/><span style='font-size:10px'>%s Electoral Votes</span>
+        </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
+              dem, rep,
+              dem, rep,
+              vts))
+  },
+  spatialdata2@data$iso_3166_2, spatialdata2@data$EV.s,
+  spatialdata2@data$BidenStateWinProb, spatialdata2@data$TrumpStateWinProb,
+  spatialdata2@data$who, SIMPLIFY = F) %>%
+  set_names(spatialdata2@data$states)
+
+#Coding the interactive leaflet map
+# Dems are blue and Reps are red.
+factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata2@data$who)
+
+crs.laea <- leafletCRS(
+  crsClass="L.Proj.CRS", code='EPSG:2163',
+  proj4def='+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs',
+  resolutions = c(65536, 32768, 16384, 8192, 4096, 2048,1024, 512, 256, 128))
+
+
+
+leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
+                                            minZoom = 3, maxZoom = 3,
+                                            dragging = FALSE, zoomControl = FALSE,
+                                            attributionControl = FALSE)) %>%
+  addPolygons(data=spatialdata2, group = 'states',
+              weight=1, color='#222',
+              fillColor= ~factpal(who), fill = T, opacity = 1,
+              fillOpacity = ~ifelse(spatialdata2@data$TrumpStateWinProb<=10,1,
+                                    ifelse(spatialdata2@data$TrumpStateWinProb<=20,.80,
+                                           ifelse(spatialdata2@data$TrumpStateWinProb<=30,.40,
+                                                  ifelse(spatialdata2@data$TrumpStateWinProb<=40,.20,
+                                                         ifelse(spatialdata2@data$TrumpStateWinProb<=50,.15,
+                                                                ifelse(spatialdata2@data$TrumpStateWinProb<=60,.15,
+                                                                       ifelse(spatialdata2@data$TrumpStateWinProb<=70,.20,
+                                                                              ifelse(spatialdata2@data$TrumpStateWinProb<=80,.40,
+                                                                                     ifelse(spatialdata2@data$TrumpStateWinProb<=90,.80,1))))))))),
+              label=~hoverText,
+              labelOptions = labelOptions(offset = c(-70,-30),
+                                          #direction='bottom',
+                                          textOnly = T,
+                                          style=list(
+                                            'background'='rgba(255,255,255,0.95)',
+                                            'border-color' = 'rgba(0,0,0,1)',
+                                            'border-radius' = '4px',
+                                            'border-style' = 'solid',
+                                            'border-width' = '4px')),
+              highlightOptions = highlightOptions(weight = 3, bringToFront = TRUE)) %>%
+  addLegend("bottomright", 
+            colors =c("#698DC5", "#F07763"),
+            labels= c("Biden", "Trump"),
+            title= "Key",
+            opacity = 1) %>%
+  # addLabelOnlyMarkers(
+  #   data=FiveThirtyEightElectoralCollege.centers,
+  #   label = spatialdata2$EV.s,
+  #   labelOptions = labelOptions(
+  #     noHide = 'T', textOnly = T,
+  #     offset=c(-2,0), textsize = '11px',
+  #     style=list('color'='black')))  %>%
+  htmlwidgets::onRender(
+    "function(el, t) {
+        var myMap = this;
+        // get rid of the ugly grey background
+        myMap._container.style['background'] = '#ffffff';
+    }")
+```
+
+## Tile Map
+This is an alternative method to look at the election map. Each state is visualized by the number of electoral votes it has. 
+
+```{r}
 #Interactive Leaflet Map
 ensureCranPkg <- function(pkg) {
   if(!suppressWarnings(requireNamespace(pkg, quietly = TRUE))) {
@@ -378,7 +522,7 @@ spatialdata@data$hoverText <- mapply(
 factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata@data$who)
 
 leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
-                               minZoom = -1.5, maxZoom = -1.5,
+                               minZoom = -2.35, maxZoom = -2.35,
                                dragging = FALSE, zoomControl = FALSE,
                                attributionControl = FALSE)) %>%
   addPolygons(data=FiveThirtyEightElectoralCollege, group = 'college',
@@ -389,7 +533,7 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
               fillOpacity = ~ifelse(who=='D',(BidenStateWinProb/100)-0.1,
                                     (TrumpStateWinProb/100)-0.1),
               label=~hoverText,
-              labelOptions = labelOptions(offset = c(-100,-140),
+              labelOptions = labelOptions(offset = c(-60,-50),
                                           #direction='bottom',
                                           textOnly = T,
                                           style=list(
@@ -413,103 +557,21 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
         myMap._container.style['background'] = '#ffffff';
     }")
 
-
-##### INTERACTIVE MAP ######
-#install.packages("remotes")
-#library(remotes)
-#remotes::install_github("hrbrmstr/albersusa")
-library(albersusa)
+```
 
 
-spatialdata2 <- rmapshaper::ms_simplify(albersusa::usa_composite())
-#simulations <- simulations %<>% arrange(state)
-colnames(simulations)[2] <- "iso_3166_2"
-spatialdata2@data %<>% dplyr::left_join(simulations, by=c("iso_3166_2"="iso_3166_2"))
+## A Tale of 20,000 Individual Simulations
+The model simulates the presidential 20,000 times. These are the most common electoral results.
+
+```{r}
+final_evs.gg
+```
 
 
-# This is our pretty hover content
-spatialdata2@data$hoverText <- mapply(
-  function(st, vts, dem, rep, w) {
-    htmltools::HTML(
-      sprintf("<div style='font-size:12px;width:200px;float:left'>
-            <span style='font-size:18px;font-weight:bold'>%s</span><br/>
-            Chances of Winning<br/>
-            <div style='width:95%%'>
-              <span style='float:left'>Biden</span>
-              <span style='float:right'>Trump</span>
-              <br/>
-              <span style='color:#698DC5;float:left'>%s%%</span>
-              <span style='color:#F07763;float:right'>%s%%</span><br clear='all'/>
-              <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
-              <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
-            </div>
-            <br/><span style='font-size:10px'>%s Electoral Votes</span>
-        </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
-              dem, rep,
-              dem, rep,
-              vts))
-  },
-  spatialdata2@data$iso_3166_2, spatialdata2@data$EV.s,
-  spatialdata2@data$BidenStateWinProb, spatialdata2@data$TrumpStateWinProb,
-  spatialdata2@data$who, SIMPLIFY = F) %>%
-  set_names(spatialdata2@data$states)
+## State Outcomes
+The highlighted bar represents an 80% chance that the margin of victory will lie inside the range.
 
-#Coding the interactive leaflet map
-# Dems are blue and Reps are red.
-factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata2@data$who)
-
-crs.laea <- leafletCRS(
-  crsClass="L.Proj.CRS", code='EPSG:2163',
-  proj4def='+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs',
-  resolutions = c(65536, 32768, 16384, 8192, 4096, 2048,1024, 512, 256, 128))
-
-
-leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
-                                            minZoom = 3.5, maxZoom = 3.5,
-                                            dragging = TRUE, zoomControl = FALSE,
-                                            attributionControl = FALSE)) %>%
-  addPolygons(data=spatialdata2, group = 'states',
-              weight=1, color='#222',
-              fillColor= ~factpal(who), fill = T, opacity = 1,
-              fillOpacity = ~ifelse(spatialdata2@data$TrumpStateWinProb<=10,1,
-                                    ifelse(spatialdata2@data$TrumpStateWinProb<=20,.80,
-                                           ifelse(spatialdata2@data$TrumpStateWinProb<=30,.40,
-                                                  ifelse(spatialdata2@data$TrumpStateWinProb<=40,.20,
-                                                         ifelse(spatialdata2@data$TrumpStateWinProb<=50,.15,
-                                                                ifelse(spatialdata2@data$TrumpStateWinProb<=60,.15,
-                                                                       ifelse(spatialdata2@data$TrumpStateWinProb<=70,.20,
-                                                                              ifelse(spatialdata2@data$TrumpStateWinProb<=80,.40,
-                                                                                     ifelse(spatialdata2@data$TrumpStateWinProb<=90,.80,1))))))))),
-              label=~hoverText,
-              labelOptions = labelOptions(offset = c(-100,-140),
-                                          #direction='bottom',
-                                          textOnly = T,
-                                          style=list(
-                                            'background'='rgba(255,255,255,0.95)',
-                                            'border-color' = 'rgba(0,0,0,1)',
-                                            'border-radius' = '4px',
-                                            'border-style' = 'solid',
-                                            'border-width' = '4px')),
-              highlightOptions = highlightOptions(weight = 3, bringToFront = TRUE)) %>%
-  addLegend("bottomright", 
-            colors =c("#698DC5", "#F07763"),
-            labels= c("Biden", "Trump"),
-            title= "Key",
-            opacity = 1) %>%
-  # addLabelOnlyMarkers(
-  #   data=FiveThirtyEightElectoralCollege.centers,
-  #   label = spatialdata2$EV.s,
-  #   labelOptions = labelOptions(
-  #     noHide = 'T', textOnly = T,
-  #     offset=c(-2,0), textsize = '11px',
-  #     style=list('color'='black')))  %>%
-  htmlwidgets::onRender(
-    "function(el, t) {
-        var myMap = this;
-        // get rid of the ugly grey background
-        myMap._container.style['background'] = '#ffffff';
-    }")
-
+```{r}
 
 #Box plots
 marginstateresults <- trumpstateresults-bidenstateresults
