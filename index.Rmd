@@ -1,10 +1,19 @@
 ---
-title: "Who will be President?"
+title: "The Presidential Forecast"
+output: html_document
 ---
+
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
 ```
 
+```{r}
+htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; float: left;" id="Header">
+<strong>The 2020 Election promises to be one of the most consequential elections in American history.<br> Who is most likely to take The White House? </strong> <br>
+</div>')
+```
+
+##  {.tabset}
 
 ```{r}
 setwd("~/Desktop")
@@ -262,13 +271,6 @@ bidenpercentiles <- percentiles(bidenstateresults)
 trumppercentiles <- percentiles(trumpstateresults)
 otherpercentiles <- percentiles(otherstateresults)
 
-#knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
-
-htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 750px; float: left;" id="Header">
-<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
-<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
-<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
-
 
 #Chance Map
 chancemap <- plot_usmap(data = simulations, values = "TrumpStateWinProb", color = "black",size=0.55) + 
@@ -289,8 +291,10 @@ final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
   theme(legend.position = 'top',
         panel.grid.minor = element_blank()) +
   scale_fill_manual(name='Legend',values=c('Biden Wins'='#698DC5','Trump Wins'='#F07763'))+
-  labs(x='Democratic electoral college votes',title='A Histogram of Electoral College Outcomes',
-       subtitle=sprintf("After 20,000 simulations, Biden wins the electoral college %s percent of times. \nHere are the most likely outcomes.",round(mean(finalEV$BidenEV>=270)*100,3)))
+  labs(x="Biden's Electoral College count",
+       y="Number of times outcome occurred",
+       title='A Histogram of electoral college Outcomes',
+       subtitle=sprintf("Biden wins the electoral college %s percent of times.",round(mean(finalEV$BidenEV>=270)*100,3)))
 
 #Margin Map
 party_colors <- c("#698DC5","#F07763") 
@@ -314,7 +318,18 @@ p4 <- p3 + labs(x = "Chance of Trump Win", y = "State") +
 
 ```
 
-```{r}
+### Geographic Map
+
+```{r,fig.width = 9.5, fig.asp = .70, fig.align = "left"}
+#knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
+
+htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
+<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
+<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
+
+htmltools::HTML('<div style="font-family:futura; font-size: 14px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
+</div>')
 
 ##### INTERACTIVE MAP ######
 #install.packages("remotes")
@@ -397,7 +412,7 @@ crs.laea <- leafletCRS(
 
 
 leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
-                                            minZoom = 3, maxZoom = 3,
+                                            minZoom = 3.4, maxZoom = 3.4,
                                             dragging = FALSE, zoomControl = FALSE,
                                             attributionControl = FALSE)) %>%
   addPolygons(data=spatialdata2, group = 'states',
@@ -423,11 +438,7 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
                                             'border-style' = 'solid',
                                             'border-width' = '4px')),
               highlightOptions = highlightOptions(weight = 3, bringToFront = TRUE)) %>%
-  addLegend("bottomright", 
-            colors =c("#698DC5", "#F07763"),
-            labels= c("Biden", "Trump"),
-            title= "Key",
-            opacity = 1) %>%
+  setView(lng = -98.5795,lat = 39.8283, zoom = 3.4) %>%
   # addLabelOnlyMarkers(
   #   data=FiveThirtyEightElectoralCollege.centers,
   #   label = spatialdata2$EV.s,
@@ -443,10 +454,19 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
     }")
 ```
 
-## Tile Map
-This is an alternative method to look at the election map. Each state is visualized by the number of electoral votes it has. 
+### Tile Map
 
-```{r}
+```{r,fig.width = 9.5, fig.asp = .82, fig.align = "left"}
+#knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
+
+htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
+<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
+<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
+
+htmltools::HTML('<div style="font-family:futura; font-size: 14px; width: 900px; float: left;" id="Header">This is an alternative method to look at the election map.<br>Each state is visualized by the number of electoral votes it has. 
+</div>')
+
 #Interactive Leaflet Map
 ensureCranPkg <- function(pkg) {
   if(!suppressWarnings(requireNamespace(pkg, quietly = TRUE))) {
@@ -522,7 +542,7 @@ spatialdata@data$hoverText <- mapply(
 factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata@data$who)
 
 leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
-                               minZoom = -2.35, maxZoom = -2.35,
+                               minZoom = -1.5, maxZoom = -1.5,
                                dragging = FALSE, zoomControl = FALSE,
                                attributionControl = FALSE)) %>%
   addPolygons(data=FiveThirtyEightElectoralCollege, group = 'college',
@@ -556,22 +576,23 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
         // get rid of the ugly grey background
         myMap._container.style['background'] = '#ffffff';
     }")
-
 ```
 
+##
 
-## A Tale of 20,000 Individual Simulations
-The model simulates the presidential 20,000 times. These are the most common electoral results.
+```{r,fig.width = 10, fig.asp = .42, fig.align = "center"}
 
-```{r}
+htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
+<strong>A Tale of 20,000 Individual Simulations<br> <span style="font-size: 16px;" </span>  The model simulates the presidential 20,000 times. These are the most common electoral results.</span> </strong> <hr>
+</div>')
+
 final_evs.gg
 ```
 
-
-## State Outcomes
-The highlighted bar represents an 80% chance that the margin of victory will lie inside the range.
-
-```{r}
+```{r,fig.width = 10, fig.asp = 2.25, fig.align = "center"}
+htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
+<strong>State Outcomes<br> <span style="font-size: 16px;" </span> The highlighted bars represents an 80% chance that the margin of victory will lie inside the range. </strong> <hr>
+</div>')
 
 #Box plots
 marginstateresults <- trumpstateresults-bidenstateresults
@@ -585,24 +606,23 @@ party_colors <- c("#698DC5","#F07763")
 
 p0 <- ggplot(data = marginpercentiles,
              mapping = aes(x = V3,
-                           y = reorder(V1,V3),
-                           color = V3>0))
+                           y = reorder(V1,V3)))
 
 p1 <- p0 + geom_vline(xintercept = 0, color = "gray30") +
-  geom_point(shape=16,size = 2) +
+  geom_point(shape=16,size = 2,color=ifelse(marginpercentiles$V3<0,"#698DC5","#F07763")) +
   geom_rect(data=marginpercentiles, mapping=aes(xmin=ifelse(V2<0,V2,0), 
                                                 xmax=ifelse(V4<0,V4,0), 
                                                 ymin=ymin,ymax=ymax,
-                                                fill="red"),color="black",alpha=0.2) +
+                                                fill="red"),color="black",alpha=0.2,show.legend = F) +
   geom_rect(data=marginpercentiles, mapping=aes(xmin=ifelse(V2>0,V2,0), 
                                                 xmax=ifelse(V4>0,V4,0), 
                                                 ymin=ymin,ymax=ymax,
-                                                fill="blue"),color="black",alpha=0.2)
+                                                fill="blue"),color="black",alpha=0.2,show.legend = F)
 
-p2 <- p1 + scale_color_manual(values = party_colors)
+p2 <- p1 + scale_color_manual(ifelse(marginpercentiles$V3<0,"#698DC5","#F07763"))
 
 p3 <- p2 + scale_x_continuous(breaks = c(-90, -75, -50, -25, 0, 25, 50),
-                              labels = c("-90\n (Biden)", "-75", "-50","-25", "0", "25", "50\n(Trump)"))
+                              labels = c("-90\n (Biden)", "-75", "-50","-25", "0", "25", "50\n(Trump)"),position = "top")
 
 p3 + labs(x = "Margin of Victory", y = "State") +
   theme(axis.text=element_text(size=8)) + theme_minimal()

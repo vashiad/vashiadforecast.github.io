@@ -2,8 +2,26 @@ name: "personal-website"
 output_dir: "."
 navbar:
   title: "The Hot Take"
+  type: inverse
   left:
     - text: "The Presidency"
       href: index.html
-    - text: "The Senate"
+      menu:
+        - text: "Swing States"
+        - text: "Ohio"
+          href: page_a.html
+        - text: "Georgia"
+          href: page_b.html
+        - text: "---------"
+        - text: "Every State"
+        - text: "Alabama"
+          href: page_c.html
+        - text: "Alaska"
+          href: page_d.html
+    - text: "About Me"
       href: about.html
+output:
+  html_document:
+    theme: default ## Preference
+    highlight: textmate ## Preference
+    css: styles.css ## custom CSS
