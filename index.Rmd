@@ -9,9 +9,12 @@ knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
 
 ```{r}
 htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; float: left;" id="Header">
-<strong>The 2020 Election promises to be one of the most consequential elections in American history.<br> Who is most likely to take The White House? </strong> <br>
+<strong>The 2020 Election promises to be one of the most consequential elections in American history.<br> Who is most likely to take The White House? </strong>
+<br>
+
 </div>')
 ```
+
 
 ##  {.tabset}
 
@@ -29,6 +32,10 @@ library(leaflet)
 library(magrittr)
 library(tilegramsR)
 library(shiny)
+library(kableExtra)
+library(rgdal)
+library(rgeos)
+
 
 data <- read.csv("2020forecast.csv")
 
@@ -320,7 +327,7 @@ p4 <- p3 + labs(x = "Chance of Trump Win", y = "State") +
 
 ### Geographic Map
 
-```{r,fig.width = 9.5, fig.asp = .70, fig.align = "left"}
+```{r,fig.width = 9.5, fig.asp = .61, fig.align = "left"}
 #knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
 
 htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
@@ -372,6 +379,53 @@ spatialdata2 <- rmapshaper::ms_simplify(albersusa::usa_composite())
 colnames(simulations)[2] <- "iso_3166_2"
 spatialdata2@data %<>% dplyr::left_join(simulations, by=c("iso_3166_2"="iso_3166_2"))
 
+centerpoints <- gCentroid(spatialdata2,byid=TRUE,id=spatialdata2@data$name)
+
+## ADJUSTING MARKERS
+#CA
+centerpoints@coords[3] <- -121.11154
+#WI
+centerpoints@coords[22] <- -89
+#MI
+centerpoints@coords[39] <- -84.4
+centerpoints@coords[90] <- 43.0
+#IL
+centerpoints@coords[8] <- -88.7
+#IN
+centerpoints@coords[9] <- -85.8
+#OH
+centerpoints@coords[45] <- -82.1
+#PA
+centerpoints@coords[17] <- -77.2
+#NY
+centerpoints@coords[44] <- -74.4
+#FL
+centerpoints@coords[25] <- -81.2
+#MD
+centerpoints@coords[28] <- -75.95
+centerpoints@coords[79] <- 38.85
+#DE
+centerpoints@coords[20] <- -73.4
+centerpoints@coords[71] <- 38.6
+#NJ
+centerpoints@coords[29] <- -72.5
+centerpoints@coords[80] <- 39.7
+#CT
+centerpoints@coords[5] <- -72.24
+centerpoints@coords[56] <- 41.52
+#RI
+centerpoints@coords[47] <- -69.95
+centerpoints@coords[98] <- 41.0
+#MA
+centerpoints@coords[38] <- -71.48
+centerpoints@coords[89] <- 42.35
+#VT
+centerpoints@coords[33] <- -72.38
+#NH
+centerpoints@coords[43] <- -71.30
+#ME
+centerpoints@coords[37] <- -68.82
+
 
 # This is our pretty hover content
 spatialdata2@data$hoverText <- mapply(
@@ -412,7 +466,7 @@ crs.laea <- leafletCRS(
 
 
 leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
-                                            minZoom = 3.4, maxZoom = 3.4,
+                                            minZoom = 3.2, maxZoom = 3.2,
                                             dragging = FALSE, zoomControl = FALSE,
                                             attributionControl = FALSE)) %>%
   addPolygons(data=spatialdata2, group = 'states',
@@ -438,14 +492,14 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
                                             'border-style' = 'solid',
                                             'border-width' = '4px')),
               highlightOptions = highlightOptions(weight = 3, bringToFront = TRUE)) %>%
-  setView(lng = -98.5795,lat = 39.8283, zoom = 3.4) %>%
-  # addLabelOnlyMarkers(
-  #   data=FiveThirtyEightElectoralCollege.centers,
-  #   label = spatialdata2$EV.s,
-  #   labelOptions = labelOptions(
-  #     noHide = 'T', textOnly = T,
-  #     offset=c(-2,0), textsize = '11px',
-  #     style=list('color'='black')))  %>%
+  setView(lng = -98.5795,lat = 40.083, zoom = 3.4) %>%
+  addLabelOnlyMarkers(
+    data=centerpoints,
+    label = spatialdata2$EV.s,
+    labelOptions = labelOptions(
+      noHide = 'T', textOnly = T,
+      offset=c(0,0), textsize = '12px',
+      style=list('color'='black')))  %>%
   htmlwidgets::onRender(
     "function(el, t) {
         var myMap = this;
@@ -456,7 +510,7 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
 
 ### Tile Map
 
-```{r,fig.width = 9.5, fig.asp = .82, fig.align = "left"}
+```{r,fig.width = 9.5, fig.asp = .72, fig.align = "left"}
 #knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
 
 htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
@@ -464,7 +518,7 @@ htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width:
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
 <strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
 
-htmltools::HTML('<div style="font-family:futura; font-size: 14px; width: 900px; float: left;" id="Header">This is an alternative method to look at the election map.<br>Each state is visualized by the number of electoral votes it has. 
+htmltools::HTML('<div style="font-family:futura; font-size: 14px; width: 900px; float: left;" id="Header"><br>This is an alternative method to look at the election map.<br>Each state is visualized by the number of electoral votes it has. Hover over each state to view state by state chances. 
 </div>')
 
 #Interactive Leaflet Map
@@ -542,7 +596,7 @@ spatialdata@data$hoverText <- mapply(
 factpal <- colorFactor(c("#698DC5","#F07763"), spatialdata@data$who)
 
 leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
-                               minZoom = -1.5, maxZoom = -1.5,
+                               minZoom = -1.7, maxZoom = -1.7,
                                dragging = FALSE, zoomControl = FALSE,
                                attributionControl = FALSE)) %>%
   addPolygons(data=FiveThirtyEightElectoralCollege, group = 'college',
@@ -580,6 +634,20 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
 
 ##
 
+```{r,fig.width = 8, fig.asp = 0.8, fig.align = "left"}
+df <- data.frame("Candidate" <- c("Joe Biden","Donald Trump","Others"),
+           "Electoral votes" <- c(round(mean(finalEV$BidenEV),1),round(mean(finalEV$TrumpEV),1),0.0),
+           "Popular vote" <-  c(round(BidenNPV2,1),round(TrumpNPV2,1),round(OtherNPV2,1)))
+colnames(df) <- c("Candidate","Electoral votes","Popular vote")
+
+kable(df) %>%
+  kable_styling("striped", full_width = F, font_size = 18) %>%
+  column_spec(1:3, bold = T) %>%
+  row_spec(1, bold = T, color = "#698DC5", background = "white") %>%
+  row_spec(2, bold = T, color = "#F07763", background = "white") %>%
+  row_spec(3, bold = T, color = "#cf9800", background = "white")
+```
+
 ```{r,fig.width = 10, fig.asp = .42, fig.align = "center"}
 
 htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
@@ -589,7 +657,8 @@ htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; 
 final_evs.gg
 ```
 
-```{r,fig.width = 10, fig.asp = 2.25, fig.align = "center"}
+```{r, fig.width = 10, fig.asp = 2, fig.align = "center"} 
+
 htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
 <strong>State Outcomes<br> <span style="font-size: 16px;" </span> The highlighted bars represents an 80% chance that the margin of victory will lie inside the range. </strong> <hr>
 </div>')
