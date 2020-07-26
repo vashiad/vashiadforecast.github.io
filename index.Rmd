@@ -2,6 +2,37 @@
 title: "The Presidential Forecast"
 output: html_document
 ---
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 23px;
+  font-family: "Futura"
+}
+h1.title {
+  font-size: 34px;
+  font-family: "Futura";
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+  font-family: "Futura";
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+  font-family: "Futura";
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
 
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
@@ -11,7 +42,7 @@ knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
 ```{r}
 htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; float: left;" id="Header">
 <strong>The 2020 Election promises to be one of the most consequential elections in American history.<br> Who is most likely to take The White House? </strong>
-<br>
+<hr>
 
 </div>')
 ```
@@ -171,16 +202,20 @@ simulations <- data %>%
   mutate(BidenWin=0) %>%
   mutate(OtherWin=0)
 
-nsims <- 1000
+nsims <- 20000
 
 TrumpEVWinCount <- 0
 BidenEVWinCount <- 0
 OtherEVWinCount <- 0
 TieEVCount <- 0
-
+#EV empty vectors
 TrumpEVWinVector <- rep(NA, nsims)
 BidenEVWinVector <- rep(NA, nsims)
 OtherEVWinVector <- rep(NA, nsims)
+#Popular vote empty vectors
+TrumpNPVWinVector <- rep(NA, nsims)
+BidenNPVWinVector <- rep(NA, nsims)
+OtherNPVWinVector <- rep(NA, nsims)
 
 bidenstateresults <- matrix(NA, nrow = nsims, ncol = length(data$Name))
 colnames(bidenstateresults) <- data$Name
@@ -229,6 +264,9 @@ for (x in 1:nsims){
   TrumpEVWinVector[x] <- TrumpVoteEV
   BidenEVWinVector[x] <- BidenVoteEV
   OtherEVWinVector[x] <- OtherVoteEV
+  TrumpNPVWinVector[x] <- weighted.mean(trumpstateresults[1,],data$EV.s)
+  BidenNPVWinVector[x] <- weighted.mean(bidenstateresults[1,],data$EV.s)
+  OtherNPVWinVector[x] <- weighted.mean(otherstateresults[1,],data$EV.s)
   if (TrumpVoteEV>=270){
     TrumpEVWinCount = TrumpEVWinCount + 1
   } else {
@@ -295,15 +333,17 @@ statesexistingcsv <- read.csv("statescsv.csv")
 statesfinalcsv <- rbind(statesexistingcsv,statesupdatedcsv)
 write.csv(statesfinalcsv,'statescsv.csv',row.names = FALSE)
 
-
 #Creating csv file for plots in the future (National)
 nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
                                  "FinalPredictedTrump" <- round(mean(finalEV$TrumpEV),1),
                                 "FinalPredictedBiden" <- round(mean(finalEV$BidenEV),1),
                                 "FinalPredictedOther" <- round(mean(finalEV$OtherEV),1),
-                                "TrumpWinProb" <- TProbability,
-                                "BidenWinProb" <- BProbability,
-                                "OtherWinProb" <- OProbability,
+                                "TrumpStateWinProb" <- TProbability,
+                                "BidenStateWinProb" <- BProbability,
+                                "OtherStateWinProb" <- OProbability,
+                                "TrumpNPV" <- round(mean(TrumpNPVWinVector),1),
+                                "BidenNPV" <- round(mean(BidenNPVWinVector),1),
+                                "OtherNPV" <- round(mean(OtherNPVWinVector),1),
                                 "LowTrump" <- quantile(finalEV$TrumpEV,0.20),
                                 "HighTrump" <- quantile(finalEV$TrumpEV,0.80),
                                 "LowBiden" <- quantile(finalEV$BidenEV,0.20),
@@ -312,9 +352,7 @@ nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
                                 "HighOther" <- quantile(finalEV$OtherEV,0.80))
 
 colnames(nationalupdatedcsv) <- c("Date","FinalPredictedTrump","FinalPredictedBiden",
-                                  "FinalPredictedOther","TrumpStateWinProb","BidenStateWinProb",
-                                  "OtherStateWinProb","LowTrump","HighTrump","LowBiden","HighBiden",
-                                  "LowOther","HighOther")
+                                  "FinalPredictedOther","TrumpStateWinProb","BidenStateWinProb",  "OtherStateWinProb","TrumpNPV","BidenNPV","OtherNPV","LowTrump","HighTrump","LowBiden","HighBiden","LowOther","HighOther")
 
 nationalexistingcsv <- read.csv("nationalcsv.csv")
 nationalfinalcsv <- rbind(nationalexistingcsv,nationalupdatedcsv)
@@ -377,7 +415,7 @@ htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width:
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
 <strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
 
-htmltools::HTML('<div style="font-family:futura; font-size: 14px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
+htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
 </div>')
 
 ##### INTERACTIVE MAP ######
@@ -473,7 +511,7 @@ centerpoints@coords[37] <- -68.82
 spatialdata2@data$hoverText <- mapply(
   function(st, vts, dem, rep, w) {
     htmltools::HTML(
-      sprintf("<div style='font-size:12px;width:200px;float:left'>
+      sprintf("<div style='font-family:futura;font-size:14px;width:200px;float:left'>
             <span style='font-size:18px;font-weight:bold'>%s</span><br/>
             Chances of Winning<br/>
             <div style='width:95%%'>
@@ -485,7 +523,7 @@ spatialdata2@data$hoverText <- mapply(
               <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
               <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
-            <br/><span style='font-size:10px'>%s Electoral Votes</span>
+            <br/><span style='font-size:13px'>%s Electoral Votes</span>
         </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
               dem, rep,
               dem, rep,
@@ -560,7 +598,7 @@ htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width:
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
 <strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
 
-htmltools::HTML('<div style="font-family:futura; font-size: 14px; width: 900px; float: left;" id="Header"><br>This is an alternative method to look at the election map.<br>Each state is visualized by the number of electoral votes it has. Hover over each state to view state by state chances. 
+htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>This is an alternative method to look at the election map.<br>Each state is visualized by the number of electoral votes it has. Hover over each state to view state by state chances. 
 </div>')
 
 #Interactive Leaflet Map
@@ -610,7 +648,7 @@ spatialdata@data %<>% dplyr::left_join(simulations2, by=c('state'='state'))
 spatialdata@data$hoverText <- mapply(
   function(st, vts, dem, rep, w) {
     htmltools::HTML(
-      sprintf("<div style='font-size:12px;width:200px;float:left'>
+      sprintf("<div style='font-family:futura;font-size:14px;width:200px;float:left'>
             <span style='font-size:18px;font-weight:bold'>%s</span><br/>
             Chances of Winning<br/>
             <div style='width:95%%'>
@@ -622,7 +660,7 @@ spatialdata@data$hoverText <- mapply(
               <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
               <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
-            <br/><span style='font-size:10px'>%s Electoral Votes</span>
+            <br/><span style='font-size:13px'>%s Electoral Votes</span>
         </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
               dem, rep,
               dem, rep,
@@ -679,7 +717,7 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
 ```{r,fig.width = 8.4, fig.asp = 0.86, fig.align = "center"}
 df <- data.frame("Candidate" <- c("Joe Biden","Donald Trump","Others"),
            "Electoral votes" <- c(round(mean(finalEV$BidenEV),1),round(mean(finalEV$TrumpEV),1),round(mean(finalEV$OtherEV),1)),
-           "Popular vote" <-  c(round(BidenNPV2,1),round(TrumpNPV2,1),round(OtherNPV2,1)))
+           "Popular vote" <-  c(round(mean(BidenNPVWinVector),1),round(mean(TrumpNPVWinVector),1),round(mean(OtherNPVWinVector),1)))
 colnames(df) <- c("Candidate","Electoral votes","Popular vote")
 
 kable(df) %>%
@@ -707,15 +745,17 @@ plot_ly(evproj,x=evproj$Date) %>%
   add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
   add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
   add_trace(y=~FinalPredictedOther,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
-  layout(margin = list(t=40),title = 'Electoral votes',
+  layout(margin = list(t=40),title = 'Electoral votes over time',
          font=list(family='Futura', size=12.8),
-         xaxis = list(title = 'Date',
-                      zeroline = TRUE),
-         yaxis = list(title = 'Average electoral votes'),
+         xaxis = list(fixedrange=TRUE,title = 'Date',
+                      zeroline = TRUE,
+                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+         yaxis = list(fixedrange=TRUE,title = 'Average electoral votes'),
          hovermode = "x unified",
          hoverlabel=list(bgcolor='white', 
                          size=11, 
                          family='Futura'))
+
 ```
 
 ### National Chances
@@ -731,40 +771,63 @@ plot_ly(evproj2,x=evproj2$Date) %>%
   add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
   add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
   add_trace(y=~OtherStateWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
-  layout(margin = list(t=40),title = 'Chances of winning Electoral college',
+  layout(margin = list(t=40),title = 'Chances of winning over time',
          font=list(family='Futura', size=12.8),
-         xaxis = list(title = 'Date',
-                      zeroline = TRUE),
-         yaxis = list(title = 'Probability'),
+         xaxis = list(fixedrange=TRUE,title = 'Date',
+                      zeroline = TRUE,
+                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+         yaxis = list(fixedrange=TRUE,title = 'Probability'),
          hovermode = "x unified",
          hoverlabel=list(bgcolor='white', 
                          size=11, 
                          family='Futura'))
 ```
 
-##
-```{r,fig.width = 10, fig.asp = 0.7}
-htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
-<strong>A Tale of 20,000 Individual Simulations<br> <span style="font-size: 16px;" </span>  The model simulates the presidential 20,000 times. These are the most common electoral results.</span> </strong> <hr>
-</div>')
+### Popular vote
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
+nationalproj <- read.csv("nationalcsv.csv")
+nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
+
+evproj2 <- nationalproj %>%
+  select("Date","BidenNPV","TrumpNPV","OtherNPV")
+
+plot_ly(evproj2,x=evproj2$Date) %>%
+  add_trace(y=~BidenNPV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
+  add_trace(y=~TrumpNPV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
+  add_trace(y=~OtherNPV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  layout(margin = list(t=40),title = 'Popular vote over time',
+         font=list(family='Futura', size=12.8),
+         xaxis = list(fixedrange=TRUE,title = 'Date',
+                      zeroline = TRUE,
+                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+         yaxis = list(fixedrange=TRUE,title = 'Average Popular vote %'),
+         hovermode = "x unified",
+         hoverlabel=list(bgcolor='white', 
+                         size=11, 
+                         family='Futura'))
 ```
 
 
-```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align = "center"}
+##
+
+# A Tale of 20,000 Individual Simulations
+### The model simulates the presidential 20,000 times. These are the most common electoral results.
+
+---
+
+```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align ="center"}
 ggplotly(final_evs.gg,) %>%
-  layout(title = 'A Tale of 20,000 Individual Simulations',
+  layout(title=" ",
          font=list(family='Futura', size=16))
 
 ```
 
 
-```{r,fig.width = 10, fig.asp = 0.7}
+# State Outcomes
+### The highlighted bars represents an 80% chance that the margin of victory will lie inside the range.
 
-htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
-<strong>State Outcomes<br> <span style="font-size: 16px;" </span> The highlighted bars represents an 80% chance that the margin of victory <br >will lie inside the range. </strong> <hr>
-</div>')
-```
-
+---
 
 ```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "center"} 
 
@@ -800,8 +863,11 @@ p4 <- p3 + labs(x = "Margin of Victory", y = "State") +
   theme(axis.text=element_text(size=8)) + theme_minimal()
 
 ggplotly(p4) %>%
-  layout(margin = list(t=47),title = 'State Outcomes',
-         font=list(family='Futura', size=16))
+  layout(margin = list(t=47),xaxis=list(side="top",size=14),
+         font = list(family='Futura', size=16),
+         xaxis = list(side="top",fixedrange=TRUE),
+         yaxis = list(fixedrange=TRUE,tickfont = list(size = 17)),
+         showlegend=FALSE)
 
 
 #rmarkdown::render_site()
