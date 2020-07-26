@@ -37,7 +37,7 @@ pre { /* Code block - determines code spacing between lines */
 
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
-# To update site: rmarkdown::render_site()
+
 ```
 
 ```{r}
@@ -46,6 +46,7 @@ htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; 
 <hr>
 
 </div>')
+
 ```
 
 
@@ -84,12 +85,12 @@ BidenNPV1 <- weighted.mean(data$Biden2,data$EV.s)
 OtherNPV1 <- weighted.mean(data$Other,data$EV.s)
 
 #Forecasting the national popular vote using GE polling data
-BidenNPVPollAvg <- 51.1 #Input polling aggregate data here
-TrumpNPVPollAvg <- 41.5 #Input polling aggregate data here
-OtherNPVPollAvg <- 100 - (BidenNPVPollAvg + TrumpNPVPollAvg)
-BidenNPVPollAvg <- BidenNPVPollAvg + (OtherNPVPollAvg * 0.35)
-TrumpNPVPollAvg <- TrumpNPVPollAvg + (OtherNPVPollAvg * 0.35)
-OtherNPVPollAvg <- OtherNPVPollAvg * 0.30
+BidenInput <- 50.0 #Input polling aggregate data here
+TrumpInput <- 42.5 #Input polling aggregate data here
+OtherInput <- 100 - (BidenInput + TrumpInput)
+BidenNPVPollAvg <- BidenInput + (OtherInput * 0.35)
+TrumpNPVPollAvg <- TrumpInput + (OtherInput * 0.35)
+OtherNPVPollAvg <- OtherInput * 0.30
 
 #Forecasting national popular voting using both methods
 TrumpNPV2 <- (TrumpNPV1*0.80) + (TrumpNPVPollAvg*0.20)
@@ -203,12 +204,13 @@ simulations <- data %>%
   mutate(BidenWin=0) %>%
   mutate(OtherWin=0)
 
-nsims <- 20000
-
 TrumpEVWinCount <- 0
 BidenEVWinCount <- 0
 OtherEVWinCount <- 0
 TieEVCount <- 0
+
+nsims <- 5000
+
 #EV empty vectors
 TrumpEVWinVector <- rep(NA, nsims)
 BidenEVWinVector <- rep(NA, nsims)
@@ -288,7 +290,6 @@ finalEV <- data.frame("BidenEV"=BidenEVWinVector,
                       "TrumpEV"=TrumpEVWinVector,
                       "OtherEV"=OtherEVWinVector)
 
-writeLines(paste(Sys.time(),Sys.Date()),"check.txt")
 
 TProbability <- (TrumpEVWinCount/nsims)*100
 BProbability <- (BidenEVWinCount/nsims)*100
@@ -304,7 +305,6 @@ simulations$TrumpStateWinProb <- (simulations$TrumpWin / (simulations$TrumpWin +
 simulations$BidenStateWinProb <- (simulations$BidenWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 simulations$OtherStateWinProb <- (simulations$OtherWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 
-writeLines(paste(Sys.time(),Sys.Date()),"check2.txt")
 #Percentiles
 
 percentiles <- function(candidate){
@@ -337,7 +337,6 @@ statesexistingcsv <- read.csv("statescsv.csv")
 statesfinalcsv <- rbind(statesexistingcsv,statesupdatedcsv)
 write.csv(statesfinalcsv,'statescsv.csv',row.names = FALSE)
 
-writeLines(paste(Sys.time(),Sys.Date()),"check3.txt")
 #Creating csv file for plots in the future (National)
 nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
                                  "FinalPredictedTrump" <- round(mean(finalEV$TrumpEV),1),
@@ -374,7 +373,6 @@ chancemap <- plot_usmap(data = simulations2, values = "TrumpStateWinProb", color
   ) + theme(legend.position = "right")
 
 
-writeLines(paste(Sys.time(),Sys.Date()),"check4.txt")
 
 #Histogram
 final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
