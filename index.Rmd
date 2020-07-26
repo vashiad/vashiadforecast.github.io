@@ -171,7 +171,7 @@ simulations <- data %>%
   mutate(BidenWin=0) %>%
   mutate(OtherWin=0)
 
-nsims <- 20000
+nsims <- 1000
 
 TrumpEVWinCount <- 0
 BidenEVWinCount <- 0
@@ -697,7 +697,7 @@ kable(df) %>%
 
 ```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
 nationalproj <- read.csv("nationalcsv.csv")
-nationalproj$Date <- as.Date(nationalproj$Date,"%Y-%m-%d")
+nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
 
 
 evproj <- nationalproj %>%
@@ -722,7 +722,7 @@ plot_ly(evproj,x=evproj$Date) %>%
 
 ```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
 nationalproj <- read.csv("nationalcsv.csv")
-nationalproj$Date <- as.Date(nationalproj$Date,"%Y-%m-%d")
+nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
 
 evproj2 <- nationalproj %>%
   select("Date","BidenStateWinProb","TrumpStateWinProb","OtherStateWinProb")
@@ -743,21 +743,30 @@ plot_ly(evproj2,x=evproj2$Date) %>%
 ```
 
 ##
-
-```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align = "center"}
-
+```{r,fig.width = 10, fig.asp = 0.7}
 htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
 <strong>A Tale of 20,000 Individual Simulations<br> <span style="font-size: 16px;" </span>  The model simulates the presidential 20,000 times. These are the most common electoral results.</span> </strong> <hr>
 </div>')
-
-final_evs.gg
 ```
 
-```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "center"} 
+
+```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align = "center"}
+ggplotly(final_evs.gg,) %>%
+  layout(title = 'A Tale of 20,000 Individual Simulations',
+         font=list(family='Futura', size=16))
+
+```
+
+
+```{r,fig.width = 10, fig.asp = 0.7}
 
 htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
-<strong>State Outcomes<br> <span style="font-size: 16px;" </span> The highlighted bars represents an 80% chance that the margin of victory will lie inside the range. </strong> <hr>
+<strong>State Outcomes<br> <span style="font-size: 16px;" </span> The highlighted bars represents an 80% chance that the margin of victory <br >will lie inside the range. </strong> <hr>
 </div>')
+```
+
+
+```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "center"} 
 
 #Box plots
 marginpercentiles <- arrange(marginpercentiles,V3)
@@ -787,8 +796,13 @@ p2 <- p1 + scale_color_manual(ifelse(marginpercentiles$V3<0,"#698DC5","#F07763")
 p3 <- p2 + scale_x_continuous(breaks = c(-90, -75, -50, -25, 0, 25, 50),
                               labels = c("-90\n (Biden)", "-75", "-50","-25", "0", "25", "50\n(Trump)"),position = "top")
 
-p3 + labs(x = "Margin of Victory", y = "State") +
+p4 <- p3 + labs(x = "Margin of Victory", y = "State") +
   theme(axis.text=element_text(size=8)) + theme_minimal()
+
+ggplotly(p4) %>%
+  layout(margin = list(t=47),title = 'State Outcomes',
+         font=list(family='Futura', size=16))
+
 
 #rmarkdown::render_site()
 ```
