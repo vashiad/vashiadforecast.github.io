@@ -5,6 +5,7 @@ output: html_document
 
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
+
 ```
 
 ```{r}
@@ -19,8 +20,7 @@ htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; 
 ##  {.tabset}
 
 ```{r}
-setwd("~/Desktop")
-
+setwd("~/Desktop/vashiadforecast.github.io")
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
@@ -35,7 +35,8 @@ library(shiny)
 library(kableExtra)
 library(rgdal)
 library(rgeos)
-
+library(tidyr)
+library(plotly)
 
 data <- read.csv("2020forecast.csv")
 
@@ -170,7 +171,7 @@ simulations <- data %>%
   mutate(BidenWin=0) %>%
   mutate(OtherWin=0)
 
-nsims <- 1000
+nsims <- 20000
 
 TrumpEVWinCount <- 0
 BidenEVWinCount <- 0
@@ -244,6 +245,10 @@ for (x in 1:nsims){
   simulations <- simulations[-c(12)]
 }
 
+finalEV <- data.frame("BidenEV"=BidenEVWinVector,
+                      "TrumpEV"=TrumpEVWinVector,
+                      "OtherEV"=OtherEVWinVector)
+
 TProbability <- (TrumpEVWinCount/nsims)*100
 BProbability <- (BidenEVWinCount/nsims)*100
 OProbability <- (OtherEVWinCount/nsims)*100
@@ -257,10 +262,6 @@ TieProbability <- (TieEVCount/nsims)*100
 simulations$TrumpStateWinProb <- (simulations$TrumpWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 simulations$BidenStateWinProb <- (simulations$BidenWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 simulations$OtherStateWinProb <- (simulations$OtherWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
-
-simulations <- cbind(fips = fips(simulations$Name), simulations)
-simulations <- simulations %>% drop_na()
-
 
 #Percentiles
 
@@ -278,15 +279,56 @@ bidenpercentiles <- percentiles(bidenstateresults)
 trumppercentiles <- percentiles(trumpstateresults)
 otherpercentiles <- percentiles(otherstateresults)
 
+marginstateresults <- trumpstateresults-bidenstateresults
+marginpercentiles <- percentiles(marginstateresults)
+
+
+#Creating csv files for plots in the future (States)
+library(dplyr)
+statesupdatedcsv <- simulations %>%
+  select("Name","FinalPredictedTrump","FinalPredictedBiden","FinalPredictedOther",
+         "TrumpStateWinProb","BidenStateWinProb","OtherStateWinProb")
+statesupdatedcsv <- cbind(marginpercentiles, statesupdatedcsv)
+statesupdatedcsv <- cbind(Date=as.character(Sys.time()),statesupdatedcsv)
+#write.csv(updatedcsv,'csvsample.csv',row.names = FALSE)
+statesexistingcsv <- read.csv("statescsv.csv")
+statesfinalcsv <- rbind(statesexistingcsv,statesupdatedcsv)
+write.csv(statesfinalcsv,'statescsv.csv',row.names = FALSE)
+
+
+#Creating csv file for plots in the future (National)
+nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
+                                 "FinalPredictedTrump" <- round(mean(finalEV$TrumpEV),1),
+                                "FinalPredictedBiden" <- round(mean(finalEV$BidenEV),1),
+                                "FinalPredictedOther" <- round(mean(finalEV$OtherEV),1),
+                                "TrumpWinProb" <- TProbability,
+                                "BidenWinProb" <- BProbability,
+                                "OtherWinProb" <- OProbability,
+                                "LowTrump" <- quantile(finalEV$TrumpEV,0.20),
+                                "HighTrump" <- quantile(finalEV$TrumpEV,0.80),
+                                "LowBiden" <- quantile(finalEV$BidenEV,0.20),
+                                "HighBiden" <- quantile(finalEV$BidenEV,0.80),
+                                "LowOther" <- quantile(finalEV$OtherEV,0.20),
+                                "HighOther" <- quantile(finalEV$OtherEV,0.80))
+
+colnames(nationalupdatedcsv) <- c("Date","FinalPredictedTrump","FinalPredictedBiden",
+                                  "FinalPredictedOther","TrumpStateWinProb","BidenStateWinProb",
+                                  "OtherStateWinProb","LowTrump","HighTrump","LowBiden","HighBiden",
+                                  "LowOther","HighOther")
+
+nationalexistingcsv <- read.csv("nationalcsv.csv")
+nationalfinalcsv <- rbind(nationalexistingcsv,nationalupdatedcsv)
+write.csv(nationalfinalcsv,'nationalcsv.csv',row.names = FALSE)
+
+#Dropping NAs for maps
+simulations2 <- cbind(fips = fips(simulations$Name), simulations)
+simulations2 <- simulations2 %>% drop_na()
 
 #Chance Map
-chancemap <- plot_usmap(data = simulations, values = "TrumpStateWinProb", color = "black",size=0.55) + 
+chancemap <- plot_usmap(data = simulations2, values = "TrumpStateWinProb", color = "black",size=0.55) + 
   scale_fill_gradient2(
     low = "#698DC5", mid="white",high = "#F07763", name = "% Chance", midpoint=50,label = scales::comma
   ) + theme(legend.position = "right")
-
-finalEV <- data.frame("BidenEV"=BidenEVWinVector,
-                      "TrumpEV"=TrumpEVWinVector)
 
 
 #Histogram
@@ -306,7 +348,7 @@ final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
 #Margin Map
 party_colors <- c("#698DC5","#F07763") 
 
-p0 <- ggplot(data = simulations,
+p0 <- ggplot(data = simulations2,
              mapping = aes(x = TrumpStateWinProb,
                            y = reorder(Name, TrumpStateWinProb),
                            color = TrumpStateWinProb>50))
@@ -373,11 +415,11 @@ if(!suppressWarnings(requireNamespace('usgazetteer', quietly = TRUE))) {
 }
 
 library(albersusa)
-simulations$who=factor(ifelse(simulations$BidenStateWinProb>simulations$TrumpStateWinProb,'D','R'))
+simulations2$who=factor(ifelse(simulations2$BidenStateWinProb>simulations2$TrumpStateWinProb,'D','R'))
 spatialdata2 <- rmapshaper::ms_simplify(albersusa::usa_composite())
-#simulations <- simulations %<>% arrange(state)
-colnames(simulations)[2] <- "iso_3166_2"
-spatialdata2@data %<>% dplyr::left_join(simulations, by=c("iso_3166_2"="iso_3166_2"))
+#simulations2 <- simulations2 %<>% arrange(state)
+colnames(simulations2)[2] <- "iso_3166_2"
+spatialdata2@data %<>% dplyr::left_join(simulations2, by=c("iso_3166_2"="iso_3166_2"))
 
 centerpoints <- gCentroid(spatialdata2,byid=TRUE,id=spatialdata2@data$name)
 
@@ -559,10 +601,10 @@ library(tilegramsR)
 #spdf@data %<>% dplyr::left_join(winprobs, by=c('state'='state'))
 
 #Adding additional stuff
-simulations$who=factor(ifelse(simulations$BidenStateWinProb>simulations$TrumpStateWinProb,'D','R'))
-colnames(simulations)[2] <- "state"
+simulations2$who=factor(ifelse(simulations2$BidenStateWinProb>simulations2$TrumpStateWinProb,'D','R'))
+colnames(simulations2)[2] <- "state"
 spatialdata <- FiveThirtyEightElectoralCollege.states
-spatialdata@data %<>% dplyr::left_join(simulations, by=c('state'='state'))
+spatialdata@data %<>% dplyr::left_join(simulations2, by=c('state'='state'))
 
 # This is our pretty hover content
 spatialdata@data$hoverText <- mapply(
@@ -634,9 +676,9 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
 
 ##
 
-```{r,fig.width = 8, fig.asp = 0.8, fig.align = "left"}
+```{r,fig.width = 8.4, fig.asp = 0.86, fig.align = "center"}
 df <- data.frame("Candidate" <- c("Joe Biden","Donald Trump","Others"),
-           "Electoral votes" <- c(round(mean(finalEV$BidenEV),1),round(mean(finalEV$TrumpEV),1),0.0),
+           "Electoral votes" <- c(round(mean(finalEV$BidenEV),1),round(mean(finalEV$TrumpEV),1),round(mean(finalEV$OtherEV),1)),
            "Popular vote" <-  c(round(BidenNPV2,1),round(TrumpNPV2,1),round(OtherNPV2,1)))
 colnames(df) <- c("Candidate","Electoral votes","Popular vote")
 
@@ -648,7 +690,61 @@ kable(df) %>%
   row_spec(3, bold = T, color = "#cf9800", background = "white")
 ```
 
-```{r, out.width="90%", out.height="10%", fig.align = "center"}
+
+##  {.tabset}
+
+### Electoral votes
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
+nationalproj <- read.csv("nationalcsv.csv")
+nationalproj$Date <- as.Date(nationalproj$Date,"%Y-%m-%d")
+
+
+evproj <- nationalproj %>%
+  select("Date","FinalPredictedBiden","FinalPredictedTrump","FinalPredictedOther")
+
+plot_ly(evproj,x=evproj$Date) %>%
+  add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
+  add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
+  add_trace(y=~FinalPredictedOther,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  layout(margin = list(t=40),title = 'Electoral votes',
+         font=list(family='Futura', size=12.8),
+         xaxis = list(title = 'Date',
+                      zeroline = TRUE),
+         yaxis = list(title = 'Average electoral votes'),
+         hovermode = "x unified",
+         hoverlabel=list(bgcolor='white', 
+                         size=11, 
+                         family='Futura'))
+```
+
+### National Chances
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
+nationalproj <- read.csv("nationalcsv.csv")
+nationalproj$Date <- as.Date(nationalproj$Date,"%Y-%m-%d")
+
+evproj2 <- nationalproj %>%
+  select("Date","BidenStateWinProb","TrumpStateWinProb","OtherStateWinProb")
+
+plot_ly(evproj2,x=evproj2$Date) %>%
+  add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
+  add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
+  add_trace(y=~OtherStateWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  layout(margin = list(t=40),title = 'Chances of winning Electoral college',
+         font=list(family='Futura', size=12.8),
+         xaxis = list(title = 'Date',
+                      zeroline = TRUE),
+         yaxis = list(title = 'Probability'),
+         hovermode = "x unified",
+         hoverlabel=list(bgcolor='white', 
+                         size=11, 
+                         family='Futura'))
+```
+
+##
+
+```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align = "center"}
 
 htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
 <strong>A Tale of 20,000 Individual Simulations<br> <span style="font-size: 16px;" </span>  The model simulates the presidential 20,000 times. These are the most common electoral results.</span> </strong> <hr>
@@ -657,15 +753,13 @@ htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; 
 final_evs.gg
 ```
 
-```{r, fig.width = 10, fig.asp = 2,  out.width="100%", out.height="50%", fig.align = "center"} 
+```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "center"} 
 
 htmltools::HTML('<div style="font-family:futura; font-size: 30px; width: 900px; float: left;" id="Header">
 <strong>State Outcomes<br> <span style="font-size: 16px;" </span> The highlighted bars represents an 80% chance that the margin of victory will lie inside the range. </strong> <hr>
 </div>')
 
 #Box plots
-marginstateresults <- trumpstateresults-bidenstateresults
-marginpercentiles <- percentiles(marginstateresults)
 marginpercentiles <- arrange(marginpercentiles,V3)
 marginpercentiles$ymin <- 1:56
 marginpercentiles$ymin <- marginpercentiles$ymin - 0.40
