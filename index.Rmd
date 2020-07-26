@@ -2,6 +2,7 @@
 title: "The Presidential Forecast"
 output: html_document
 ---
+
 <style type="text/css">
 
 body{ /* Normal  */
@@ -36,7 +37,7 @@ pre { /* Code block - determines code spacing between lines */
 
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
-
+# To update site: rmarkdown::render_site()
 ```
 
 ```{r}
@@ -264,9 +265,9 @@ for (x in 1:nsims){
   TrumpEVWinVector[x] <- TrumpVoteEV
   BidenEVWinVector[x] <- BidenVoteEV
   OtherEVWinVector[x] <- OtherVoteEV
-  TrumpNPVWinVector[x] <- weighted.mean(trumpstateresults[1,],data$EV.s)
-  BidenNPVWinVector[x] <- weighted.mean(bidenstateresults[1,],data$EV.s)
-  OtherNPVWinVector[x] <- weighted.mean(otherstateresults[1,],data$EV.s)
+  TrumpNPVWinVector[x] <- weighted.mean(trumpstateresults[x,],data$EV.s)
+  BidenNPVWinVector[x] <- weighted.mean(bidenstateresults[x,],data$EV.s)
+  OtherNPVWinVector[x] <- weighted.mean(otherstateresults[x,],data$EV.s)
   if (TrumpVoteEV>=270){
     TrumpEVWinCount = TrumpEVWinCount + 1
   } else {
@@ -287,6 +288,8 @@ finalEV <- data.frame("BidenEV"=BidenEVWinVector,
                       "TrumpEV"=TrumpEVWinVector,
                       "OtherEV"=OtherEVWinVector)
 
+writeLines(paste(Sys.time(),Sys.Date()),"check.txt")
+
 TProbability <- (TrumpEVWinCount/nsims)*100
 BProbability <- (BidenEVWinCount/nsims)*100
 OProbability <- (OtherEVWinCount/nsims)*100
@@ -301,6 +304,7 @@ simulations$TrumpStateWinProb <- (simulations$TrumpWin / (simulations$TrumpWin +
 simulations$BidenStateWinProb <- (simulations$BidenWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 simulations$OtherStateWinProb <- (simulations$OtherWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 
+writeLines(paste(Sys.time(),Sys.Date()),"check2.txt")
 #Percentiles
 
 percentiles <- function(candidate){
@@ -333,6 +337,7 @@ statesexistingcsv <- read.csv("statescsv.csv")
 statesfinalcsv <- rbind(statesexistingcsv,statesupdatedcsv)
 write.csv(statesfinalcsv,'statescsv.csv',row.names = FALSE)
 
+writeLines(paste(Sys.time(),Sys.Date()),"check3.txt")
 #Creating csv file for plots in the future (National)
 nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
                                  "FinalPredictedTrump" <- round(mean(finalEV$TrumpEV),1),
@@ -368,6 +373,8 @@ chancemap <- plot_usmap(data = simulations2, values = "TrumpStateWinProb", color
     low = "#698DC5", mid="white",high = "#F07763", name = "% Chance", midpoint=50,label = scales::comma
   ) + theme(legend.position = "right")
 
+
+writeLines(paste(Sys.time(),Sys.Date()),"check4.txt")
 
 #Histogram
 final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
@@ -523,7 +530,7 @@ spatialdata2@data$hoverText <- mapply(
               <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
               <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
-            <br/><span style='font-size:13px'>%s Electoral Votes</span>
+            <br/><span style='font-size:13px;float:left'>%s Electoral Votes</span>
         </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
               dem, rep,
               dem, rep,
@@ -660,7 +667,7 @@ spatialdata@data$hoverText <- mapply(
               <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
               <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
-            <br/><span style='font-size:13px'>%s Electoral Votes</span>
+            <br/><span style='font-size:13px;float:left'>%s Electoral Votes</span>
         </div>",usgazetteer::state.areas.2010$State[which(usgazetteer::state.areas.2010$USPS==st)],
               dem, rep,
               dem, rep,
@@ -869,7 +876,5 @@ ggplotly(p4) %>%
          yaxis = list(fixedrange=TRUE,tickfont = list(size = 17)),
          showlegend=FALSE)
 
-
-#rmarkdown::render_site()
 ```
 
