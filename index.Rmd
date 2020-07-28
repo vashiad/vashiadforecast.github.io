@@ -1,5 +1,5 @@
 ---
-title: "The Presidential Forecast"
+title: "The National Picture"
 output: html_document
 ---
 
@@ -50,7 +50,7 @@ htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; 
 ```
 
 
-##  {.tabset}
+##  {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 setwd("~/Desktop/vashiadforecast.github.io")
@@ -209,7 +209,7 @@ BidenEVWinCount <- 0
 OtherEVWinCount <- 0
 TieEVCount <- 0
 
-nsims <- 5000
+nsims <- 10000
 
 #EV empty vectors
 TrumpEVWinVector <- rep(NA, nsims)
@@ -305,15 +305,19 @@ simulations$TrumpStateWinProb <- (simulations$TrumpWin / (simulations$TrumpWin +
 simulations$BidenStateWinProb <- (simulations$BidenWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 simulations$OtherStateWinProb <- (simulations$OtherWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
 
+write.csv(bidenstateresults,'bidenstateresults.csv',row.names = FALSE)
+write.csv(trumpstateresults,'trumpstateresults.csv',row.names = FALSE)
+write.csv(otherstateresults,'otherstateresults.csv',row.names = FALSE)
+
 #Percentiles
 
 percentiles <- function(candidate){
   dataframe <- data.frame()
   for (i in 1:ncol(candidate)){
     dataframe[i,1] <- colnames(candidate)[i]
-    dataframe[i,2] <- quantile(candidate[,i],0.20)
+    dataframe[i,2] <- quantile(candidate[,i],0.10)
     dataframe[i,3] <- mean(candidate[,i])
-    dataframe[i,4] <- quantile(candidate[,i],0.80)
+    dataframe[i,4] <- quantile(candidate[,i],0.90)
   }
   return(dataframe)
 }
@@ -348,12 +352,12 @@ nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
                                 "TrumpNPV" <- round(mean(TrumpNPVWinVector),1),
                                 "BidenNPV" <- round(mean(BidenNPVWinVector),1),
                                 "OtherNPV" <- round(mean(OtherNPVWinVector),1),
-                                "LowTrump" <- quantile(finalEV$TrumpEV,0.20),
-                                "HighTrump" <- quantile(finalEV$TrumpEV,0.80),
-                                "LowBiden" <- quantile(finalEV$BidenEV,0.20),
-                                "HighBiden" <- quantile(finalEV$BidenEV,0.80),
-                                "LowOther" <- quantile(finalEV$OtherEV,0.20),
-                                "HighOther" <- quantile(finalEV$OtherEV,0.80))
+                                "LowTrump" <- quantile(finalEV$TrumpEV,0.10),
+                                "HighTrump" <- quantile(finalEV$TrumpEV,0.90),
+                                "LowBiden" <- quantile(finalEV$BidenEV,0.10),
+                                "HighBiden" <- quantile(finalEV$BidenEV,0.90),
+                                "LowOther" <- quantile(finalEV$OtherEV,0.10),
+                                "HighOther" <- quantile(finalEV$OtherEV,0.90))
 
 colnames(nationalupdatedcsv) <- c("Date","FinalPredictedTrump","FinalPredictedBiden",
                                   "FinalPredictedOther","TrumpStateWinProb","BidenStateWinProb",  "OtherStateWinProb","TrumpNPV","BidenNPV","OtherNPV","LowTrump","HighTrump","LowBiden","HighBiden","LowOther","HighOther")
@@ -726,7 +730,7 @@ df <- data.frame("Candidate" <- c("Joe Biden","Donald Trump","Others"),
 colnames(df) <- c("Candidate","Electoral votes","Popular vote")
 
 kable(df) %>%
-  kable_styling("striped", full_width = F, font_size = 20) %>%
+  kable_styling("striped", full_width = F, font_size = 20,position = "center") %>%
   column_spec(1:3, bold = T) %>%
   row_spec(1, bold = T, color = "#698DC5", background = "white") %>%
   row_spec(2, bold = T, color = "#F07763", background = "white") %>%
@@ -734,7 +738,7 @@ kable(df) %>%
 ```
 
 
-##  {.tabset}
+##  {.tabset .tabset-fade .tabset-pills}
 
 ### Electoral votes
 
@@ -747,19 +751,21 @@ evproj <- nationalproj %>%
   select("Date","FinalPredictedBiden","FinalPredictedTrump","FinalPredictedOther")
 
 plot_ly(evproj,x=evproj$Date) %>%
+  config(displayModeBar = FALSE) %>%
   add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
   add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
   add_trace(y=~FinalPredictedOther,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
   layout(margin = list(t=40),title = 'Electoral votes over time',
          font=list(family='Futura', size=12.8),
          xaxis = list(fixedrange=TRUE,title = 'Date',
-                      zeroline = TRUE,
+                      zeroline = TRUE,spikecolor="black",
+                      spikethickness=2,
                       range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Average electoral votes'),
          hovermode = "x unified",
-         hoverlabel=list(bgcolor='white', 
-                         size=11, 
-                         family='Futura'))
+         hoverlabel = list(font = list(bgcolor='white',
+                                       family="Futura",
+                                       size = 12 )))
 
 ```
 
@@ -773,19 +779,21 @@ evproj2 <- nationalproj %>%
   select("Date","BidenStateWinProb","TrumpStateWinProb","OtherStateWinProb")
 
 plot_ly(evproj2,x=evproj2$Date) %>%
+  config(displayModeBar = FALSE) %>%
   add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
   add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
   add_trace(y=~OtherStateWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
   layout(margin = list(t=40),title = 'Chances of winning over time',
          font=list(family='Futura', size=12.8),
          xaxis = list(fixedrange=TRUE,title = 'Date',
-                      zeroline = TRUE,
+                      zeroline = TRUE,spikecolor="black",
+                      spikethickness=2,
                       range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Probability'),
          hovermode = "x unified",
-         hoverlabel=list(bgcolor='white', 
-                         size=11, 
-                         family='Futura'))
+         hoverlabel = list(font = list(bgcolor='white',
+                                       family="Futura",
+                                       size = 12 )))
 ```
 
 ### Popular vote
@@ -798,19 +806,21 @@ evproj2 <- nationalproj %>%
   select("Date","BidenNPV","TrumpNPV","OtherNPV")
 
 plot_ly(evproj2,x=evproj2$Date) %>%
+  config(displayModeBar = FALSE) %>%
   add_trace(y=~BidenNPV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
   add_trace(y=~TrumpNPV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
   add_trace(y=~OtherNPV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
   layout(margin = list(t=40),title = 'Popular vote over time',
          font=list(family='Futura', size=12.8),
          xaxis = list(fixedrange=TRUE,title = 'Date',
-                      zeroline = TRUE,
+                      zeroline = TRUE,spikecolor="black",
+                      spikethickness=2,
                       range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Average Popular vote %'),
          hovermode = "x unified",
-         hoverlabel=list(bgcolor='white', 
-                         size=11, 
-                         family='Futura'))
+         hoverlabel = list(font = list(bgcolor='white',
+                                       family="Futura",
+                                       size = 12 )))
 ```
 
 
@@ -823,8 +833,12 @@ plot_ly(evproj2,x=evproj2$Date) %>%
 
 ```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align ="center"}
 ggplotly(final_evs.gg,) %>%
+  config(displayModeBar = FALSE) %>%
   layout(title=" ",
-         font=list(family='Futura', size=16))
+         font=list(family='Futura', size=16),
+         yaxis = list(fixedrange=TRUE),
+         xaxis = list(fixedrange=TRUE)) %>%
+  style(hoverinfo='none')
 
 ```
 
@@ -867,12 +881,14 @@ p3 <- p2 + scale_x_continuous(breaks = c(-90, -75, -50, -25, 0, 25, 50),
 p4 <- p3 + labs(x = "Margin of Victory", y = "State") +
   theme(axis.text=element_text(size=8)) + theme_minimal()
 
-ggplotly(p4) %>%
-  layout(margin = list(t=47),xaxis=list(side="top",size=14),
-         font = list(family='Futura', size=16),
-         xaxis = list(side="top",fixedrange=TRUE),
+ggplotly(p4)%>%
+  config(displayModeBar = FALSE) %>%
+  layout(margin = list(t=47),
+         xaxis=list(fixedrange=TRUE,side="top",size=16),
+         font = list(family='Futura', size=20),
          yaxis = list(fixedrange=TRUE,tickfont = list(size = 17)),
-         showlegend=FALSE)
+         showlegend=FALSE) %>%
+  style(hoverinfo='none') 
 
 ```
 

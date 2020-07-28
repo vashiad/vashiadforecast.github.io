@@ -4,20 +4,10 @@ navbar:
   title: "The Hot Take"
   type: inverse
   left:
-    - text: "The Presidency"
+    - text: "The National Picture"
       href: index.html
-      menu:
-        - text: "Swing States"
-        - text: "Ohio"
-          href: page_a.html
-        - text: "Georgia"
-          href: page_b.html
-        - text: "---------"
-        - text: "Every State"
-        - text: "Alabama"
-          href: page_c.html
-        - text: "Alaska"
-          href: page_d.html
+    - text: "State Forecasts"
+      href: stateforecasts.html
     - text: "About Me"
       href: about.html
 output:

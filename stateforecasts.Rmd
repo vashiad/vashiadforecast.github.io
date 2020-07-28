@@ -1,0 +1,297 @@
+---
+title: "Detailed State Forecasts"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 15px;
+  font-family: "Futura"
+}
+h1.title {
+  font-size: 34px;
+  font-family: "Futura";
+}
+h1 { /* Header 1 */
+  font-size: 32.5px;
+  font-weight: bold;
+  font-family: "Futura";
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+  font-family: "Futura";
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+
+
+</style>
+
+<style>
+  .col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+  .col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+</style>
+
+
+```{r include = FALSE}
+knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
+
+```
+
+
+```{r }
+library(knitr)
+library(scales)
+library(dplyr)
+library(usmap)
+library(formattable)
+library(kableExtra)
+
+bidenstateresults <- read.csv("bidenstateresults.csv")
+trumpstateresults <- read.csv("trumpstateresults.csv")
+otherstateresults <- read.csv("otherstateresults.csv")
+
+statesdata <- read.csv("statescsv.csv")
+statesdata <- statesdata %>%
+  mutate("Date" = lubridate::as_datetime(statesdata$Date))
+
+
+stateresults <- function(state){
+  datawrangle <- statesdata %>%
+    filter(Name==state) %>%
+    arrange(desc(Date))
+  latestresults <- slice_max(datawrangle,order_by=Date,n=1)
+  header <- htmltools::HTML(
+      sprintf(
+        '<div style="font-family:futura; font-size: 20px; width: 700px; float: left;" id="Header">
+<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:75px;height:92px;float: left;"/>
+<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:70px;height:92px;float: right;"/>
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 26px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 26px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',
+round(latestresults$BidenStateWinProb, 1),
+round(latestresults$TrumpStateWinProb, 1),
+latestresults$BidenStateWinProb,
+latestresults$TrumpStateWinProb
+      )
+    )
+  return(header)
+}
+
+maptile <- function(state){
+  datawrangle <- statesdata %>%
+    filter(Name==state) %>%
+    arrange(desc(Date))
+  latestresults <- slice_max(datawrangle,order_by=Date,n=1)
+  statefig <- plot_usmap(include=state, color = "#000000",size=1.15,
+                         fill=ifelse(latestresults$V3<0,"#698DC5","#F07763"))
+  return(statefig)
+}
+
+table <- function(state){
+  datawrangle <- statesdata %>%
+  filter(Name==state) %>%
+  arrange(desc(Date))
+  latestresults <- slice_max(datawrangle,order_by=Date,n=1)
+  df <- data.frame(" " <- c("◾","◾","◾"), "Candidate" <- c("Joe Biden","Donald Trump","Others"),
+           "Projected voteshare"<-c(round(latestresults$FinalPredictedBiden,2),round(latestresults$FinalPredictedTrump,2),round(latestresults$FinalPredictedOther,2)))
+  colnames(df) <- c(" ","Candidate","Projected voteshare")
+  
+  df %>%
+      mutate(" " = cell_spec(" ", "html", background = ifelse(Candidate=="Joe Biden", "#698DC5", ifelse(Candidate=="Donald Trump","#F07763","#cf9800"))),
+             `Projected voteshare`= ifelse(Candidate=="Joe Biden",color_bar("#cdcefa")(`Projected voteshare`),
+                                         ifelse(Candidate=="Donald Trump",color_bar("#fcc7c0")(`Projected voteshare`),color_bar("#f7e3ab")(`Projected voteshare`)))) %>%
+    kable("html",escape = F,align="r",position="left") %>%
+    kable_styling("hover", full_width = F, font_size = 15) %>%
+    row_spec(1, bold = T, color = NULL, background = "white", align="r") %>%
+    row_spec(2, bold = T, color = NULL, background = "white", align="r") %>%
+    row_spec(3, bold = T, color = NULL, background = "white", align="r") %>%
+    column_spec(2, width = "2.5cm", bold=T)
+}
+
+# #c(round(mean(bidenstateresults[,c(state)]),2)/100,
+#                                 round(mean(trumpstateresults[,c(state)]),2)/100,
+#                                 round(mean(otherstateresults[,c(state)]),2)/100))
+
+
+#State Chances Graph
+
+statechances <- function(state){
+  statechances <- statesdata %>%
+    filter(Name==state)
+  plot <- plot_ly(statechances,x=statechances$Date) %>%
+  config(displayModeBar = FALSE) %>%
+  add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
+  add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
+  add_trace(y=~OtherStateWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  layout(margin = list(t=40),title = paste('Chances of winning',state,'over time'),
+         font=list(family='Futura', size=12.8),
+         xaxis = list(fixedrange=TRUE,title = 'Date',
+                      zeroline = TRUE,spikecolor="black",
+                      spikethickness=2,
+                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+         yaxis = list(fixedrange=TRUE,title = 'Probability'),
+         hovermode = "x unified",
+         hoverlabel = list(font = list(bgcolor='white',
+                                       family="Futura",
+                                       size = 15)))
+  return(plot)
+}
+
+#State Vote share Graph
+statevoteshare <- function(state){
+  statevoteshare <- statesdata %>%
+    filter(Name==state)
+  plot <- plot_ly(statevoteshare,x=statevoteshare$Date) %>%
+  config(displayModeBar = FALSE) %>%
+  add_trace(y=~round(FinalPredictedBiden,2),name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
+  add_trace(y=~round(FinalPredictedTrump,2),name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
+  add_trace(y=~round(FinalPredictedOther,2),name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  layout(margin = list(t=40),title = paste(state,'Projected voteshare over time'),
+         font=list(family='Futura', size=12.8),
+         xaxis = list(fixedrange=TRUE,title = 'Date',
+                      zeroline = TRUE,spikecolor="black",
+                      spikethickness=2,
+                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+         yaxis = list(fixedrange=TRUE,title = 'Probability'),
+         hovermode = "x unified",
+         hoverlabel = list(font = list(bgcolor='white',
+                                       family="Futura",
+                                       size = 15)))
+  return(plot)
+}
+
+```
+
+---
+
+# New Jersey
+```{r}
+stateresults("New Jersey")
+```
+<div class = "row">
+<div class = "col-md-6">
+```{r,fig.align="center", fig.width=2, fig.height=1.7}
+table("New Jersey")
+```
+
+</div>
+
+<div class = "col-md-6">
+```{r,fig.align="center", fig.width=1.7, fig.height=1.7}
+maptile("New Jersey")
+```
+
+</div>
+</div>
+
+##  {.tabset .tabset-fade .tabset-pills}
+
+### Chance of winning
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+statechances("New Jersey")
+```
+
+### Projected voteshare
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+statevoteshare("New Jersey")
+```
+##
+
+---
+
+# Kentucky
+```{r}
+stateresults("Kentucky")
+```
+<div class = "row">
+<div class = "col-md-6">
+```{r,fig.align="center", fig.width=2, fig.height=1.7}
+table("Kentucky")
+```
+
+</div>
+
+<div class = "col-md-6">
+```{r,fig.align="center", fig.width=1.7, fig.height=1.7}
+maptile("Kentucky")
+```
+
+</div>
+</div>
+
+##  {.tabset .tabset-fade .tabset-pills}
+
+### Chance of winning
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+statechances("Kentucky")
+```
+
+### Projected voteshare
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+statevoteshare("Kentucky")
+```
+
+##
+
+---
+
+# Texas
+
+```{r}
+stateresults("Texas")
+```
+<div class = "row">
+<div class = "col-md-6">
+```{r,fig.align="center", fig.width=2, fig.height=1.7}
+table("Texas")
+```
+
+</div>
+
+<div class = "col-md-6">
+```{r,fig.align="center", fig.width=1.7, fig.height=1.7}
+maptile("Texas")
+```
+
+</div>
+</div>
+
+##  {.tabset .tabset-fade .tabset-pills}
+
+### Chance of winning
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+statechances("Texas")
+```
+
+### Projected voteshare
+
+```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+statevoteshare("Texas")
+```
+
+##
