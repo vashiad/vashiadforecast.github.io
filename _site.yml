@@ -7,7 +7,9 @@ navbar:
     - text: "The National Picture"
       href: index.html
     - text: "State Forecasts"
-      href: stateforecasts.html
+      menu:
+      - text: "New Jersey"
+        href: NewJersey.html
     - text: "About Me"
       href: about.html
 output:

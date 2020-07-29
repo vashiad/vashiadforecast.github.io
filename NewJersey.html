@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>State Forecasts</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<script src="site_libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+<script src="site_libs/plotly-binding-4.9.2.1/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="site_libs/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="site_libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">The Hot Take</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">The National Picture</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    State Forecasts
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="NewJersey.html">New Jersey</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="about.html">About Me</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">State Forecasts</h1>
+
+</div>
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 15px;
+  font-family: "Futura"
+}
+h1.title {
+  font-size: 34px;
+  font-family: "Futura";
+}
+h1 { /* Header 1 */
+  font-size: 32.5px;
+  font-weight: bold;
+  font-family: "Futura";
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+  font-family: "Futura";
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+
+
+</style>
+<style>
+  .col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+  .col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+</style>
+<hr />
+<div style="font-family:futura; font-size: 20px; width: 700px; float: left;" id="Header">
+<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:75px;height:92px;float: left;"/>
+<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:70px;height:92px;float: right;"/>
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 26px; color: #698dc5; float: left;"><strong>98%</strong></span> <span style="color: #f07763; font-size: 26px; float: right;"><strong>2%</strong></span><br clear="all" /> <span style="background: #698DC5; width: 98%; float: left;">&nbsp;</span> <span style="background: #F07763; width: 2%; float: right;">&nbsp;</span></div>
+<div class = "row">
+<div class = "col-md-6">
+<table class="table table-hover" style="font-size: 15px; width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+</th>
+<th style="text-align:right;">
+Candidate
+</th>
+<th style="text-align:right;">
+Projected voteshare
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #698DC5 !important;"> </span>
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;width: 2.5cm; font-weight: bold;">
+Joe Biden
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #cdcefa; width: 100.00%">58.98</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #F07763 !important;"> </span>
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;width: 2.5cm; font-weight: bold;">
+Donald Trump
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #fcc7c0; width: 63.84%">37.65</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #cf9800 !important;"> </span>
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;width: 2.5cm; font-weight: bold;">
+Others
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #f7e3ab; width: 5.71%">3.37</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="col-md-6">
+<p><img src="NewJersey_files/figure-html/unnamed-chunk-5-1.png" width="163.2" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="section" class="section level2 tabset tabset-fade tabset-pills">
+<h2></h2>
+<div id="chance-of-winning" class="section level3">
+<h3>Chance of winning</h3>
+<div id="htmlwidget-dd2f6cf5abaa057f315c" style="width:700px;height:345.2px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-dd2f6cf5abaa057f315c">{"x":{"visdat":{"620b6ac3ad3e":["function () ","plotlyVisDat"]},"cur_data":"620b6ac3ad3e","attrs":{"620b6ac3ad3e":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"inherit":true},"620b6ac3ad3e.1":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"inherit":true},"620b6ac3ad3e.2":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":40,"r":10},"title":"Chances of winning New Jersey over time","font":{"family":"Futura","size":12.8},"xaxis":{"domain":[0,1],"automargin":true,"fixedrange":true,"title":"Date","zeroline":true,"spikecolor":"black","spikethickness":2,"range":["2020-07-28 20:56:05","2020-08-04 00:38:14"]},"yaxis":{"domain":[0,1],"automargin":true,"fixedrange":true,"title":"Probability"},"hovermode":"x unified","hoverlabel":{"font":{"bgcolor":"white","family":"Futura","size":15}},"showlegend":true},"source":"A","config":{"showSendToCloud":false,"displayModeBar":false},"data":[{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[98,97.9,98,97.2,98.6,98.3,98.2,97.6,97.7,98.7,97.8,98.3,97.3,98],"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"type":"scatter","marker":{"color":"rgba(31,119,180,1)","line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[2,2.1,2,2.8,1.4,1.7,1.8,2.4,2.3,1.3,2.2,1.7,2.7,2],"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"type":"scatter","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"type":"scatter","marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="projected-voteshare" class="section level3">
+<h3>Projected voteshare</h3>
+<div id="htmlwidget-3f904753b62c4479326a" style="width:700px;height:345.2px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3f904753b62c4479326a">{"x":{"visdat":{"620b17554955":["function () ","plotlyVisDat"]},"cur_data":"620b17554955","attrs":{"620b17554955":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"hoverinfo":"y","inherit":true},"620b17554955.1":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"hoverinfo":"y","inherit":true},"620b17554955.2":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"hoverinfo":"y","inherit":true},"620b17554955.3":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true},"620b17554955.4":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden Low","type":"scatter","mode":"lines","fill":"tonexty","fillcolor":"rgba(105,141,197,0.3)","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true},"620b17554955.5":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true},"620b17554955.6":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump Low","type":"scatter","mode":"lines","fill":"tonexty","fillcolor":"rgba(240,119,99,0.3)","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":40,"r":10},"title":"New Jersey Projected voteshare over time","font":{"family":"Futura","size":12.8},"xaxis":{"domain":[0,1],"automargin":true,"fixedrange":true,"title":"Date","zeroline":true,"spikecolor":"black","spikethickness":2,"range":["2020-07-28 20:56:05","2020-08-04 00:38:14"]},"yaxis":{"domain":[0,1],"automargin":true,"hoverformat":".2f","fixedrange":true,"title":"Probability"},"hovermode":"x unified","hoverlabel":{"font":{"family":"Futura","size":13.5},"bgcolor":"white"},"showlegend":true},"source":"A","config":{"showSendToCloud":false,"displayModeBar":false},"data":[{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[59.2307858565418,59.284177093708,59.0683871250234,58.9767749106189,59.0965492065967,59.2575619043658,59.1516595040007,59.3665679516193,59.1661238172458,59.2777629176935,59.0969182316261,59.3131718752373,59.017673830377,58.9772152906992],"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"hoverinfo":["y","y","y","y","y","y","y","y","y","y","y","y","y","y"],"type":"scatter","marker":{"color":"rgba(31,119,180,1)","line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[37.3981966164345,37.3448053792683,37.5605953479529,37.6522075623575,37.5324332663796,37.3714205686105,37.4773229689756,37.262414521357,37.4628586557306,37.3512195552828,37.5302042426864,37.3139505990752,37.6094486439354,37.6499071836133],"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"hoverinfo":["y","y","y","y","y","y","y","y","y","y","y","y","y","y"],"type":"scatter","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37101752702369,3.37287752568756,3.37287752568756,3.37287752568756,3.37287752568756],"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"hoverinfo":["y","y","y","y","y","y","y","y","y","y","y","y","y","y"],"type":"scatter","marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[65.5805267801382,65.6823152013734,65.1379745755711,65.391138706343,64.9301898987449,65.4255726659575,65.8101224731259,65.7561677165268,65.7199484898738,65.8307335181812,65.450298246282,65.7333463000894,65.4691987226588,65.1445286748217],"name":"Biden High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(214,39,40,1)","line":{"color":"rgba(214,39,40,1)"}},"error_y":{"color":"rgba(214,39,40,1)"},"error_x":{"color":"rgba(214,39,40,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(105,141,197,0.3)","x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[53.1603347550402,53.2207854486768,53.0462833702809,52.5652549465812,52.9873531577088,52.9481886870272,52.7023066888721,53.0064084525221,52.8254837230413,53.0756380607386,53.4502740316667,52.8867080266503,52.6224325509415,52.8544293789776],"name":"Biden Low","type":"scatter","mode":"lines","fill":"tonexty","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(148,103,189,1)","line":{"color":"rgba(148,103,189,1)"}},"error_y":{"color":"rgba(148,103,189,1)"},"error_x":{"color":"rgba(148,103,189,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[43.4686477179361,43.4081970242995,43.5826991026955,44.0637275263952,43.6416293152675,43.6807937859491,43.9266757841042,43.6225740204542,43.8034987499351,43.5533444122377,43.1768484426458,43.7404144476621,44.0046899233709,43.7726930953348],"name":"Trump High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(140,86,75,1)","line":{"color":"rgba(140,86,75,1)"}},"error_y":{"color":"rgba(140,86,75,1)"},"error_x":{"color":"rgba(140,86,75,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(240,119,99,0.3)","x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[31.0484556928381,30.9466672716029,31.4910078974053,31.2378437666333,31.6987925742315,31.2034098070189,30.8188599998504,30.8728147564496,30.9090339831025,30.7982489547951,31.1768242280304,30.8937761742231,31.1579237516536,31.4825937994908],"name":"Trump Low","type":"scatter","mode":"lines","fill":"tonexty","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(227,119,194,1)","line":{"color":"rgba(227,119,194,1)"}},"error_y":{"color":"rgba(227,119,194,1)"},"error_x":{"color":"rgba(227,119,194,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<div id="section-1" class="section level2">
+<h2></h2>
+<hr />
+<div style="font-family:futura; font-size: 20px; width: 700px; float: left;" id="Header">
+<img src="BidenHead.png" alt="A picture of Joe Biden" style="width:75px;height:92px;float: left;"/>
+<img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:70px;height:92px;float: right;"/>
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 26px; color: #698dc5; float: left;"><strong>31.5%</strong></span> <span style="color: #f07763; font-size: 26px; float: right;"><strong>68.5%</strong></span><br clear="all" /> <span style="background: #698DC5; width: 31.5%; float: left;">&nbsp;</span> <span style="background: #F07763; width: 68.5%; float: right;">&nbsp;</span></div>
+<div class = "row">
+<div class = "col-md-6">
+<table class="table table-hover" style="font-size: 15px; width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+</th>
+<th style="text-align:right;">
+Candidate
+</th>
+<th style="text-align:right;">
+Projected voteshare
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #698DC5 !important;"> </span>
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;width: 2.5cm; font-weight: bold;">
+Joe Biden
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #cdcefa; width: 92.05%">46.67</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #F07763 !important;"> </span>
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;width: 2.5cm; font-weight: bold;">
+Donald Trump
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #fcc7c0; width: 100.00%">50.70</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: #cf9800 !important;"> </span>
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;width: 2.5cm; font-weight: bold;">
+Others
+</td>
+<td style="text-align:right;font-weight: bold;background-color: white !important;text-align: right;">
+<span style="display: inline-block; direction: rtl; border-radius: 4px; padding-right: 2px; background-color: #f7e3ab; width: 5.19%">2.63</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="col-md-6">
+<p><img src="NewJersey_files/figure-html/unnamed-chunk-10-1.png" width="163.2" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+</div>
+<div id="section-2" class="section level2 tabset tabset-fade tabset-pills">
+<h2></h2>
+<div id="chance-of-winning-1" class="section level3">
+<h3>Chance of winning</h3>
+<div id="htmlwidget-adc30df4b27ec3adebe0" style="width:700px;height:345.2px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-adc30df4b27ec3adebe0">{"x":{"visdat":{"620b7a6e5f38":["function () ","plotlyVisDat"]},"cur_data":"620b7a6e5f38","attrs":{"620b7a6e5f38":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"inherit":true},"620b7a6e5f38.1":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"inherit":true},"620b7a6e5f38.2":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":40,"r":10},"title":"Chances of winning Texas over time","font":{"family":"Futura","size":12.8},"xaxis":{"domain":[0,1],"automargin":true,"fixedrange":true,"title":"Date","zeroline":true,"spikecolor":"black","spikethickness":2,"range":["2020-07-28 20:56:05","2020-08-04 00:38:14"]},"yaxis":{"domain":[0,1],"automargin":true,"fixedrange":true,"title":"Probability"},"hovermode":"x unified","hoverlabel":{"font":{"bgcolor":"white","family":"Futura","size":15}},"showlegend":true},"source":"A","config":{"showSendToCloud":false,"displayModeBar":false},"data":[{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[35.2,33.9,32,33.9,34.1,32.8,34.8,32.4,33.9,35.2,32.9,29.8,34.5,31.5],"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"type":"scatter","marker":{"color":"rgba(31,119,180,1)","line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[64.8,66.1,68,66.1,65.9,67.2,65.2,67.6,66.1,64.8,67.1,70.2,65.5,68.5],"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"type":"scatter","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"type":"scatter","marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="projected-voteshare-1" class="section level3">
+<h3>Projected voteshare</h3>
+<div id="htmlwidget-f96bd9112c272e77c456" style="width:700px;height:345.2px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-f96bd9112c272e77c456">{"x":{"visdat":{"620b6c650886":["function () ","plotlyVisDat"]},"cur_data":"620b6c650886","attrs":{"620b6c650886":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"hoverinfo":"y","inherit":true},"620b6c650886.1":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"hoverinfo":"y","inherit":true},"620b6c650886.2":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"hoverinfo":"y","inherit":true},"620b6c650886.3":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true},"620b6c650886.4":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Biden Low","type":"scatter","mode":"lines","fill":"tonexty","fillcolor":"rgba(105,141,197,0.3)","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true},"620b6c650886.5":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true},"620b6c650886.6":{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"name":"Trump Low","type":"scatter","mode":"lines","fill":"tonexty","fillcolor":"rgba(240,119,99,0.3)","line":{"color":"transparent"},"showlegend":false,"hoverinfo":"none","inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":40,"r":10},"title":"Texas Projected voteshare over time","font":{"family":"Futura","size":12.8},"xaxis":{"domain":[0,1],"automargin":true,"fixedrange":true,"title":"Date","zeroline":true,"spikecolor":"black","spikethickness":2,"range":["2020-07-28 20:56:05","2020-08-04 00:38:14"]},"yaxis":{"domain":[0,1],"automargin":true,"hoverformat":".2f","fixedrange":true,"title":"Probability"},"hovermode":"x unified","hoverlabel":{"font":{"family":"Futura","size":13.5},"bgcolor":"white"},"showlegend":true},"source":"A","config":{"showSendToCloud":false,"displayModeBar":false},"data":[{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[46.9053346571189,46.9190437284651,46.5962274602414,46.8810578054704,46.7514416762209,46.7892312706638,46.9243290456175,46.8080721520259,46.8855723821749,46.9340864807088,46.8928835993039,46.6842825691552,46.7956308466911,46.672590150174],"name":"Biden","mode":"lines","line":{"color":"rgb(105,141,197)","width":2.84},"hoverinfo":["y","y","y","y","y","y","y","y","y","y","y","y","y","y"],"type":"scatter","marker":{"color":"rgba(31,119,180,1)","line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[50.4658452726451,50.4521362012989,50.7749524695226,50.4901221242935,50.619738253543,50.5819486591002,50.4468508841465,50.563107777738,50.4856075475891,50.4370934490552,50.4780235528613,50.68662458301,50.5752763054741,50.6983170019912],"name":"Trump","mode":"lines","line":{"color":"rgb(240,119,99)","width":2.84},"hoverinfo":["y","y","y","y","y","y","y","y","y","y","y","y","y","y"],"type":"scatter","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62882007023601,2.62909284783474,2.62909284783474,2.62909284783474,2.62909284783474],"name":"Others","mode":"lines","line":{"color":"rgb(207,152,0)","width":2.84},"hoverinfo":["y","y","y","y","y","y","y","y","y","y","y","y","y","y"],"type":"scatter","marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[52.9319498085174,52.7853791231332,52.5068416803924,52.7705113079808,52.3608611817074,52.6698229770547,52.7403087274894,52.6831280832712,52.7833856193043,52.7601878241023,52.7604807395051,52.3414276893267,52.9641921732424,52.4060963661577],"name":"Biden High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(214,39,40,1)","line":{"color":"rgba(214,39,40,1)"}},"error_y":{"color":"rgba(214,39,40,1)"},"error_x":{"color":"rgba(214,39,40,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(105,141,197,0.3)","x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[40.9435294844995,40.8071204242906,40.9581019077771,41.146047622017,41.0655547567003,41.0390178843394,40.921975655758,41.0670618090113,40.8709000799,41.1248672663609,40.9219711005796,41.1529161625712,40.5879219510938,41.1985058061073],"name":"Biden Low","type":"scatter","mode":"lines","fill":"tonexty","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(148,103,189,1)","line":{"color":"rgba(148,103,189,1)"}},"error_y":{"color":"rgba(148,103,189,1)"},"error_x":{"color":"rgba(148,103,189,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[56.4276504452645,56.5640595054734,56.4130780219869,56.225132307747,56.3056251730636,56.3321620454246,56.449204274006,56.3041181207527,56.500279849864,56.2463126634031,56.4489360515856,56.217990989594,56.7829852010715,56.1724013460579],"name":"Trump High","type":"scatter","mode":"lines","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(140,86,75,1)","line":{"color":"rgba(140,86,75,1)"}},"error_y":{"color":"rgba(140,86,75,1)"},"error_x":{"color":"rgba(140,86,75,1)"},"xaxis":"x","yaxis":"y","frame":null},{"fillcolor":"rgba(240,119,99,0.3)","x":["2020-07-28 20:56:05","2020-07-28 20:58:32","2020-07-28 22:14:35","2020-07-28 23:28:32","2020-07-28 23:30:16","2020-07-28 23:30:31","2020-07-28 23:30:40","2020-07-28 23:30:48","2020-07-28 23:31:03","2020-07-28 23:31:13","2020-07-29 01:38:59","2020-07-29 01:39:09","2020-07-29 01:39:18","2020-07-29 01:39:31"],"y":[44.4392301212466,44.5858008066308,44.8643382493715,44.6006686217831,45.0103187480565,44.7013569527092,44.6308712022746,44.6880518464928,44.5877943104596,44.6109921056617,44.6104264126602,45.0294794628385,44.4067149789229,44.9648107860076],"name":"Trump Low","type":"scatter","mode":"lines","fill":"tonexty","line":{"color":"transparent"},"showlegend":false,"hoverinfo":["none","none","none","none","none","none","none","none","none","none","none","none","none","none"],"marker":{"color":"rgba(227,119,194,1)","line":{"color":"rgba(227,119,194,1)"}},"error_y":{"color":"rgba(227,119,194,1)"},"error_x":{"color":"rgba(227,119,194,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<div id="section-3" class="section level2">
+<h2></h2>
+<hr />
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

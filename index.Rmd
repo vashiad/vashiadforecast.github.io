@@ -37,23 +37,12 @@ pre { /* Code block - determines code spacing between lines */
 
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
-
+knitr::opts_knit$set(root.dir = '/Users/aditya/Desktop/2020 Forecast Data')
 ```
 
 ```{r}
-htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; float: left;" id="Header">
-<strong>The 2020 Election promises to be one of the most consequential elections in American history.<br> Who is most likely to take The White House? </strong>
-<hr>
 
-</div>')
-
-```
-
-
-##  {.tabset .tabset-fade .tabset-pills}
-
-```{r}
-setwd("~/Desktop/vashiadforecast.github.io")
+setwd("~/Desktop/2020 Forecast Data")
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
@@ -71,346 +60,26 @@ library(rgeos)
 library(tidyr)
 library(plotly)
 
-data <- read.csv("2020forecast.csv")
+htmltools::HTML('<div style="font-family:futura; font-size: 16px; width: 900px; float: left;" id="Header">
+<strong>The 2020 Election promises to be one of the most consequential elections in American history.<br> Who is most likely to take The White House? </strong>
+<hr>
 
-#Sharing the leftover vote
-data$Leftovers <- 100 - (data$Trump + data$Biden)
-data$Other <- data$Leftovers * 0.40
-data$Trump2 <- data$Trump + (data$Leftovers * 0.30)
-data$Biden2 <- data$Biden + (data$Leftovers * 0.30)
+</div>')
 
-#Forecasting the national popoular vote using states
-TrumpNPV1 <- weighted.mean(data$Trump2,data$EV.s)
-BidenNPV1 <- weighted.mean(data$Biden2,data$EV.s)
-OtherNPV1 <- weighted.mean(data$Other,data$EV.s)
-
-#Forecasting the national popular vote using GE polling data
-BidenInput <- 50.0 #Input polling aggregate data here
-TrumpInput <- 42.5 #Input polling aggregate data here
-OtherInput <- 100 - (BidenInput + TrumpInput)
-BidenNPVPollAvg <- BidenInput + (OtherInput * 0.35)
-TrumpNPVPollAvg <- TrumpInput + (OtherInput * 0.35)
-OtherNPVPollAvg <- OtherInput * 0.30
-
-#Forecasting national popular voting using both methods
-TrumpNPV2 <- (TrumpNPV1*0.80) + (TrumpNPVPollAvg*0.20)
-BidenNPV2 <- (BidenNPV1*0.80) + (BidenNPVPollAvg*0.20)
-OtherNPV2 <- (OtherNPV1*0.80) + (OtherNPVPollAvg*0.20)
-NPV2Margin <- BidenNPV2 - TrumpNPV2
-
-#Regressions Strategy 1
-data$Strategy1 <- data$Partisan.Lean - NPV2Margin
-#make sure the negative sign is in order to correctly account for the differences
-
-TrumpStrategy1 <- lm(data$Trump2 ~ data$Strategy1)
-BidenStrategy1 <- lm(data$Biden2 ~ data$Strategy1)
-OtherStrategy1 <- lm(data$Other ~ data$Strategy1)
-
-data$TrumpStrategy1.1 <- predict(TrumpStrategy1)
-data$BidenStrategy1.1 <- predict(BidenStrategy1)
-data$OtherStrategy1.1 <- predict(OtherStrategy1)
-data$AdjustStrategy1.1 <- (100-(data$TrumpStrategy1.1+data$BidenStrategy1.1+data$OtherStrategy1.1))/3
-data$TrumpStrategy1.2 <- data$TrumpStrategy1.1 + data$AdjustStrategy1.1
-data$BidenStrategy1.2 <- data$BidenStrategy1.1 + data$AdjustStrategy1.1
-data$OtherStrategy1.2 <- data$OtherStrategy1.1 + data$AdjustStrategy1.1
+```
 
 
-#Regressions Strategy 2
-RegPart <- aggregate(data$Partisan.Lean,by=list(data$Region),FUN=median)
-data <- dplyr::left_join(data,RegPart,by=c("Region" = "Group.1"))
+##  {.tabset .tabset-fade .tabset-pills}
 
-results76to16 <- read.csv("potus_results_76_16.csv")
-histother <- aggregate(results76to16$other*100,by=list(results76to16$state),FUN=mean,na.rm=TRUE)
-data <- dplyr::left_join(data,histother,by=c("Abb." = "Group.1"))
+```{r}
+#Loading simulations file
 
-#Filling in NAs
-data$x.y[data$Abb.=="ME 1st"]=histother$x[histother$Group.1=="ME"]
-data$x.y[data$Abb.=="ME 2nd"]=histother$x[histother$Group.1=="ME"]
-data$x.y[data$Abb.=="NE 1st"]=histother$x[histother$Group.1=="NE"]
-data$x.y[data$Abb.=="NE 2nd"]=histother$x[histother$Group.1=="NE"]
-data$x.y[data$Abb.=="NE 3rd"]=histother$x[histother$Group.1=="NE"]
-
-
-TrumpStrategy2 <- lm(Trump2 ~ Partisan.Lean + x.x,data=data)
-BidenStrategy2 <- lm(Biden2 ~ Partisan.Lean + x.x,data=data)
-OtherStrategy2 <- lm(Other ~ x.y,data=data, na.action=na.exclude)
-
-data$TrumpStrategy2.1 <- predict(TrumpStrategy2)
-data$BidenStrategy2.1 <- predict(BidenStrategy2)
-data$OtherStrategy2.1 <- predict(OtherStrategy2)
-data$AdjustStrategy2.1 <- (100-(data$TrumpStrategy2.1+data$BidenStrategy2.1+data$OtherStrategy2.1))/3
-data$TrumpStrategy2.2 <- data$TrumpStrategy2.1 + data$AdjustStrategy2.1
-data$BidenStrategy2.2 <- data$BidenStrategy2.1 + data$AdjustStrategy2.1
-data$OtherStrategy2.2 <- data$OtherStrategy2.1 + data$AdjustStrategy2.1
-
-#Regression Strategy 3
-data2 <- read.csv("Demographics2.csv")
-
-TrumpStrategy3 <- lm(data$Trump2 ~ data$Partisan.Lean + data2$Hipanic.Latino + data2$White + data2$Black + data2$Am..Indian + data2$Asian + data2$Hawaiian.PI + data2$Other + data2$Mixed)
-BidenStrategy3 <- lm(data$Biden2 ~ data$Partisan.Lean + data2$Hipanic.Latino + data2$White + data2$Black + data2$Am..Indian + data2$Asian + data2$Hawaiian.PI + data2$Other + data2$Mixed)
-OtherStrategy3 <- lm(data$Other ~ data$Partisan.Lean + data2$Hipanic.Latino + data2$White + data2$Black + data2$Am..Indian + data2$Asian + data2$Hawaiian.PI + data2$Other + data2$Mixed)
-
-data$TrumpStrategy3.1 <- predict(TrumpStrategy3)
-data$BidenStrategy3.1 <- predict(BidenStrategy3)
-data$OtherStrategy3.1 <- predict(OtherStrategy3)
-data$AdjustStrategy3.1 <- (100-(data$TrumpStrategy3.1+data$BidenStrategy3.1+data$OtherStrategy3.1))/3
-data$TrumpStrategy3.2 <- data$TrumpStrategy3.1 + data$AdjustStrategy3.1
-data$BidenStrategy3.2 <- data$BidenStrategy3.1 + data$AdjustStrategy3.1
-data$OtherStrategy3.2 <- data$OtherStrategy3.1 + data$AdjustStrategy3.1
-
-#Combining Regressions
-data$TrumpFinalRegression <- (data$TrumpStrategy1.2*0.30)+(data$TrumpStrategy2.2*0.50)+(data$TrumpStrategy3.2*0.20)
-data$BidenFinalRegression <- (data$BidenStrategy1.2*0.30)+(data$BidenStrategy2.2*0.50)+(data$BidenStrategy3.2*0.20)
-data$OtherFinalRegression <- (data$OtherStrategy1.2*0.30)+(data$OtherStrategy2.2*0.50)+(data$OtherStrategy3.2*0.20)
-
-#Combining the Regressions with Aggregate Polling
-DaysTilElection <- as.numeric(abs((Sys.Date()- as.Date("110320", "%m%d%y"))))
-pollsweight <- ((0.0011852*((DaysTilElection)^2))-(0.412609*(DaysTilElection))+95)/100
-regweight <- 1-pollsweight
-
-data$FinalPredictedTrump <- (data$Trump2*pollsweight)+(data$TrumpFinalRegression*regweight)
-data$FinalPredictedBiden <- (data$Biden2*pollsweight)+(data$BidenFinalRegression*regweight)
-data$FinalPredictedOther <- (data$Other*pollsweight)+(data$OtherFinalRegression*regweight)
-
-#Correlation Matrix
-cormatrix <- cor(t(data2[-1:-2]))
-colnames(cormatrix) <- data2$State
-rownames(cormatrix) <- data2$State
-cormatrix <- data.frame(cormatrix)
-
-#Simulating National Error
-
-NatMarginOfError <- ((0.0000758945*(DaysTilElection)^2)+(0.00708671*(DaysTilElection))+(100-(mean(data$Trump)+mean(data$Biden)))/2)
-
-MOE <- function(NatMarginOfError){
-  x <- rt(1,10)
-  x <- x/2 #95% chance
-  x <- x * NatMarginOfError
-  return(x)
-} 
-
-#Simulating Demographic Error
-
-DemographicError <- function(){
-  samplecolumn <- sample(cormatrix,1)
-  samplerror <- rnorm(1,sd=3)
-  samplecolumn <- data.frame(samplecolumn * samplerror * data$Elasticity)
-  return(samplecolumn)
-}
-
-simulations <- data %>%
-  select(Abb., EV.s, Name,Region,Elasticity,FinalPredictedTrump,FinalPredictedBiden,FinalPredictedOther) %>%
-  mutate(TrumpWin=0) %>%
-  mutate(BidenWin=0) %>%
-  mutate(OtherWin=0)
-
-TrumpEVWinCount <- 0
-BidenEVWinCount <- 0
-OtherEVWinCount <- 0
-TieEVCount <- 0
-
-nsims <- 10000
-
-#EV empty vectors
-TrumpEVWinVector <- rep(NA, nsims)
-BidenEVWinVector <- rep(NA, nsims)
-OtherEVWinVector <- rep(NA, nsims)
-#Popular vote empty vectors
-TrumpNPVWinVector <- rep(NA, nsims)
-BidenNPVWinVector <- rep(NA, nsims)
-OtherNPVWinVector <- rep(NA, nsims)
-
-bidenstateresults <- matrix(NA, nrow = nsims, ncol = length(data$Name))
-colnames(bidenstateresults) <- data$Name
-trumpstateresults <- matrix(NA, nrow = nsims, ncol = length(data$Name))
-colnames(trumpstateresults) <- data$Name
-otherstateresults <- matrix(NA, nrow = nsims, ncol = length(data$Name))
-colnames(otherstateresults) <- data$Name
-
-
-for (x in 1:nsims){
-  TrumpVoteEV <- 0
-  BidenVoteEV  <- 0
-  OtherVoteEV <- 0
-  #Simulating Regional Error
-  RegError <- data.frame("Regions" <- RegPart$Group.1)
-  RegionalErrorFixed <- (abs(rt(length(RegPart$Group.1),10)))
-  RegError$Error <- ((rnorm(length(RegPart$Group.1),sd=3))*RegionalErrorFixed)
-  names(RegError)[1] <- "Region"
-  simulations <- dplyr::left_join(simulations,RegError,by=c("Region" = "Region"))
-  #Simulating Demographic Error
-  DemographicErrorStored <- DemographicError()
-  for (i in 1:length(simulations$Name)){
-    OneTrumpSim <- simulations$FinalPredictedTrump[i]
-    OneBidenSim <- simulations$FinalPredictedBiden[i]
-    OneOtherSim <- simulations$FinalPredictedOther[i]
-    OneAdjustedVote <- MOE(NatMarginOfError)*simulations$Elasticity[i]
-    TwoAdjustedVote <- simulations$Error[i]*simulations$Elasticity[i]
-    ThreeAdjustedVote <- DemographicErrorStored[i,1]
-    OneStateSimResult <- c(OneTrumpSim+OneAdjustedVote+TwoAdjustedVote+ThreeAdjustedVote,
-                           OneBidenSim-OneAdjustedVote-TwoAdjustedVote-ThreeAdjustedVote,
-                           OneOtherSim)
-    trumpstateresults[x,i] <- OneStateSimResult[1]
-    bidenstateresults[x,i] <- OneStateSimResult[2]
-    otherstateresults[x,i] <- OneStateSimResult[3]
-    ifelse(OneStateSimResult[1] > OneStateSimResult[2] & OneStateSimResult[3],
-           simulations$TrumpWin[i] <- simulations$TrumpWin[i]+1,
-           ifelse(OneStateSimResult[2] > OneStateSimResult[1] & OneStateSimResult[3],
-                  simulations$BidenWin[i] <- simulations$BidenWin[i]+1,
-                  simulations$OtherWin[i] <- simulations$OtherWin[i]+1))
-    ifelse(OneStateSimResult[1] > OneStateSimResult[2] & OneStateSimResult[3],
-           TrumpVoteEV <- TrumpVoteEV + simulations$EV.s[i],
-           ifelse(OneStateSimResult[2] > OneStateSimResult[1] & OneStateSimResult[3],
-                  BidenVoteEV <- BidenVoteEV + simulations$EV.s[i],
-                  OtherVoteEV <- OtherVoteEV + simulations$EV.s[i]))
-  }
-  TrumpEVWinVector[x] <- TrumpVoteEV
-  BidenEVWinVector[x] <- BidenVoteEV
-  OtherEVWinVector[x] <- OtherVoteEV
-  TrumpNPVWinVector[x] <- weighted.mean(trumpstateresults[x,],data$EV.s)
-  BidenNPVWinVector[x] <- weighted.mean(bidenstateresults[x,],data$EV.s)
-  OtherNPVWinVector[x] <- weighted.mean(otherstateresults[x,],data$EV.s)
-  if (TrumpVoteEV>=270){
-    TrumpEVWinCount = TrumpEVWinCount + 1
-  } else {
-    if (BidenVoteEV>=270){
-      BidenEVWinCount = BidenEVWinCount + 1
-    } else {
-      if (OtherVoteEV>=270){
-        OtherEVWinCount = OtherEVWinCount + 1
-      } else {
-        TieEVCount = TieEVCount + 1
-      }
-    }
-  }
-  simulations <- simulations[-c(12)]
-}
-
-finalEV <- data.frame("BidenEV"=BidenEVWinVector,
-                      "TrumpEV"=TrumpEVWinVector,
-                      "OtherEV"=OtherEVWinVector)
-
-
-TProbability <- (TrumpEVWinCount/nsims)*100
-BProbability <- (BidenEVWinCount/nsims)*100
-OProbability <- (OtherEVWinCount/nsims)*100
-TieProbability <- (TieEVCount/nsims)*100
-
-#paste("Trump wins the Elecoral College",TProbability,"% of times.")
-#paste("Biden wins the Elecoral College",BProbability,"% of times.")
-#paste("A Third Party Candidate wins the Elecoral College",OProbability,"% of times.")
-#paste("No one wins the Elecoral College (Tie)",TieProbability,"% of times.")
-
-simulations$TrumpStateWinProb <- (simulations$TrumpWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
-simulations$BidenStateWinProb <- (simulations$BidenWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
-simulations$OtherStateWinProb <- (simulations$OtherWin / (simulations$TrumpWin + simulations$BidenWin + simulations$OtherWin))*100
-
-write.csv(bidenstateresults,'bidenstateresults.csv',row.names = FALSE)
-write.csv(trumpstateresults,'trumpstateresults.csv',row.names = FALSE)
-write.csv(otherstateresults,'otherstateresults.csv',row.names = FALSE)
-
-#Percentiles
-
-percentiles <- function(candidate){
-  dataframe <- data.frame()
-  for (i in 1:ncol(candidate)){
-    dataframe[i,1] <- colnames(candidate)[i]
-    dataframe[i,2] <- quantile(candidate[,i],0.10)
-    dataframe[i,3] <- mean(candidate[,i])
-    dataframe[i,4] <- quantile(candidate[,i],0.90)
-  }
-  return(dataframe)
-}
-bidenpercentiles <- percentiles(bidenstateresults)
-trumppercentiles <- percentiles(trumpstateresults)
-otherpercentiles <- percentiles(otherstateresults)
-
-marginstateresults <- trumpstateresults-bidenstateresults
-marginpercentiles <- percentiles(marginstateresults)
-
-
-#Creating csv files for plots in the future (States)
-library(dplyr)
-statesupdatedcsv <- simulations %>%
-  select("Name","FinalPredictedTrump","FinalPredictedBiden","FinalPredictedOther",
-         "TrumpStateWinProb","BidenStateWinProb","OtherStateWinProb")
-statesupdatedcsv <- cbind(marginpercentiles, statesupdatedcsv)
-statesupdatedcsv <- cbind(Date=as.character(Sys.time()),statesupdatedcsv)
-#write.csv(updatedcsv,'csvsample.csv',row.names = FALSE)
-statesexistingcsv <- read.csv("statescsv.csv")
-statesfinalcsv <- rbind(statesexistingcsv,statesupdatedcsv)
-write.csv(statesfinalcsv,'statescsv.csv',row.names = FALSE)
-
-#Creating csv file for plots in the future (National)
-nationalupdatedcsv <- data.frame("Date" <- as.character(Sys.time()),
-                                 "FinalPredictedTrump" <- round(mean(finalEV$TrumpEV),1),
-                                "FinalPredictedBiden" <- round(mean(finalEV$BidenEV),1),
-                                "FinalPredictedOther" <- round(mean(finalEV$OtherEV),1),
-                                "TrumpStateWinProb" <- TProbability,
-                                "BidenStateWinProb" <- BProbability,
-                                "OtherStateWinProb" <- OProbability,
-                                "TrumpNPV" <- round(mean(TrumpNPVWinVector),1),
-                                "BidenNPV" <- round(mean(BidenNPVWinVector),1),
-                                "OtherNPV" <- round(mean(OtherNPVWinVector),1),
-                                "LowTrump" <- quantile(finalEV$TrumpEV,0.10),
-                                "HighTrump" <- quantile(finalEV$TrumpEV,0.90),
-                                "LowBiden" <- quantile(finalEV$BidenEV,0.10),
-                                "HighBiden" <- quantile(finalEV$BidenEV,0.90),
-                                "LowOther" <- quantile(finalEV$OtherEV,0.10),
-                                "HighOther" <- quantile(finalEV$OtherEV,0.90))
-
-colnames(nationalupdatedcsv) <- c("Date","FinalPredictedTrump","FinalPredictedBiden",
-                                  "FinalPredictedOther","TrumpStateWinProb","BidenStateWinProb",  "OtherStateWinProb","TrumpNPV","BidenNPV","OtherNPV","LowTrump","HighTrump","LowBiden","HighBiden","LowOther","HighOther")
-
-nationalexistingcsv <- read.csv("nationalcsv.csv")
-nationalfinalcsv <- rbind(nationalexistingcsv,nationalupdatedcsv)
-write.csv(nationalfinalcsv,'nationalcsv.csv',row.names = FALSE)
+simulations <- read.csv("~/Desktop/2020 Forecast Data/simulations.csv")
 
 #Dropping NAs for maps
 simulations2 <- cbind(fips = fips(simulations$Name), simulations)
 simulations2 <- simulations2 %>% drop_na()
 
-#Chance Map
-chancemap <- plot_usmap(data = simulations2, values = "TrumpStateWinProb", color = "black",size=0.55) + 
-  scale_fill_gradient2(
-    low = "#698DC5", mid="white",high = "#F07763", name = "% Chance", midpoint=50,label = scales::comma
-  ) + theme(legend.position = "right")
-
-
-
-#Histogram
-final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
-                                    fill=ifelse(BidenEV>=270,'Biden Wins','Trump Wins'))) +
-  geom_vline(xintercept = 270) +
-  geom_histogram(binwidth=1) +
-  theme_minimal() +
-  theme(legend.position = 'top',
-        panel.grid.minor = element_blank()) +
-  scale_fill_manual(name='Legend',values=c('Biden Wins'='#698DC5','Trump Wins'='#F07763'))+
-  labs(x="Biden's Electoral College count",
-       y="Number of times outcome occurred",
-       title='A Histogram of electoral college Outcomes',
-       subtitle=sprintf("Biden wins the electoral college %s percent of times.",round(mean(finalEV$BidenEV>=270)*100,3)))
-
-#Margin Map
-party_colors <- c("#698DC5","#F07763") 
-
-p0 <- ggplot(data = simulations2,
-             mapping = aes(x = TrumpStateWinProb,
-                           y = reorder(Name, TrumpStateWinProb),
-                           color = TrumpStateWinProb>50))
-
-p1 <- p0 + geom_vline(xintercept = 50, color = "gray30") +
-  geom_point(size = 2)
-
-p2 <- p1 + scale_color_manual(values = party_colors)
-
-p3 <- p2 + scale_x_continuous(breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100),
-                              labels = c("0\n (Biden)", "10", "20", "30", "40", "50", "60", "70", "80",
-                                         "90", "100\n(Trump)"))
-
-p4 <- p3 + labs(x = "Chance of Trump Win", y = "State") +
-  theme(axis.text=element_text(size=8))
 
 ```
 
@@ -418,11 +87,14 @@ p4 <- p3 + labs(x = "Chance of Trump Win", y = "State") +
 
 ```{r,fig.width = 9.5, fig.asp = .61, fig.align = "left"}
 #knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
+nationalproj <- read.csv("~/Desktop/2020 Forecast Data/nationalcsv.csv")
+latestnational <- slice_max(nationalproj,order_by=Date,n=1)
 
 htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
 <img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
-<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestnational$BidenWinProb,1),round(latestnational$TrumpWinProb,1),
+latestnational$BidenWinProb,latestnational$TrumpWinProb))
 
 htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
 </div>')
@@ -605,9 +277,10 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
 htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
 <img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
-<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(BProbability,1),round(TProbability,1),BProbability,TProbability))
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestnational$BidenWinProb,1),round(latestnational$TrumpWinProb,1),
+latestnational$BidenWinProb,latestnational$TrumpWinProb))
 
-htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>This is an alternative method to look at the election map.<br>Each state is visualized by the number of electoral votes it has. Hover over each state to view state by state chances. 
+htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
 </div>')
 
 #Interactive Leaflet Map
@@ -724,9 +397,11 @@ leaflet(options=leafletOptions(crs = leafletCRS("L.CRS.Simple"),
 ##
 
 ```{r,fig.width = 8.4, fig.asp = 0.86, fig.align = "center"}
+
 df <- data.frame("Candidate" <- c("Joe Biden","Donald Trump","Others"),
-           "Electoral votes" <- c(round(mean(finalEV$BidenEV),1),round(mean(finalEV$TrumpEV),1),round(mean(finalEV$OtherEV),1)),
-           "Popular vote" <-  c(round(mean(BidenNPVWinVector),1),round(mean(TrumpNPVWinVector),1),round(mean(OtherNPVWinVector),1)))
+           "Electoral votes" <- c(round(latestnational$FinalBidenEV,1),round(latestnational$FinalTrumpEV,1),round(latestnational$FinalOtherEV,1)),
+           "Popular vote" <-  c(round(latestnational$BidenNPV,1),round(latestnational$TrumpNPV,1),round(latestnational$OtherNPV,1)))
+
 colnames(df) <- c("Candidate","Electoral votes","Popular vote")
 
 kable(df) %>%
@@ -743,84 +418,84 @@ kable(df) %>%
 ### Electoral votes
 
 ```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
-nationalproj <- read.csv("nationalcsv.csv")
+
+nationalproj <- read.csv("~/Desktop/2020 Forecast Data/nationalcsv.csv")
 nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
 
-
-evproj <- nationalproj %>%
-  select("Date","FinalPredictedBiden","FinalPredictedTrump","FinalPredictedOther")
-
-plot_ly(evproj,x=evproj$Date) %>%
+plot_ly(nationalproj,x=nationalproj$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
-  add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
-  add_trace(y=~FinalPredictedOther,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  add_trace(y=~FinalBidenEV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalTrumpEV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalOtherEV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~HighBidenEV,name='Biden High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
+  add_trace(y=~LowBidenEV,name='Biden Low',type = 'scatter',mode='lines',
+    fill = 'tonexty',fillcolor='rgba(105,141,197,0.3)',
+    line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
+  add_trace(y=~HighTrumpEV,name='Trump High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
+  add_trace(y=~LowTrumpEV,name='Trump Low',type = 'scatter',mode='lines',
+    fill = 'tonexty',fillcolor='rgba(240,119,99,0.3)',
+    line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
   layout(margin = list(t=40),title = 'Electoral votes over time',
          font=list(family='Futura', size=12.8),
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+                      range = (c(as.character(min(nationalproj$Date)),"2020-08-04 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Average electoral votes'),
          hovermode = "x unified",
-         hoverlabel = list(font = list(bgcolor='white',
-                                       family="Futura",
-                                       size = 12 )))
+         hoverlabel = list(font = list(family="Futura",
+                                       size = 13.5 ),bgcolor='white'))
 
 ```
 
 ### National Chances
 
 ```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
-nationalproj <- read.csv("nationalcsv.csv")
-nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
 
-evproj2 <- nationalproj %>%
-  select("Date","BidenStateWinProb","TrumpStateWinProb","OtherStateWinProb")
-
-plot_ly(evproj2,x=evproj2$Date) %>%
+plot_ly(nationalproj,x=nationalproj$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
-  add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
-  add_trace(y=~OtherStateWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  add_trace(y=~BidenWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~TrumpWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~OtherWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
   layout(margin = list(t=40),title = 'Chances of winning over time',
          font=list(family='Futura', size=12.8),
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+                      range = (c(as.character(min(nationalproj$Date)),"2020-08-04 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Probability'),
          hovermode = "x unified",
-         hoverlabel = list(font = list(bgcolor='white',
-                                       family="Futura",
-                                       size = 12 )))
+         hoverlabel = list(font = list(family="Futura",
+                                       size = 13.5 ),bgcolor='white'))
 ```
 
 ### Popular vote
 
 ```{r,fig.width = 10, fig.asp = 0.47, out.width="960px", out.height="355.2px", fig.align = "center"}
-nationalproj <- read.csv("nationalcsv.csv")
-nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
 
-evproj2 <- nationalproj %>%
-  select("Date","BidenNPV","TrumpNPV","OtherNPV")
-
-plot_ly(evproj2,x=evproj2$Date) %>%
+plot_ly(nationalproj,x=nationalproj$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~BidenNPV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
-  add_trace(y=~TrumpNPV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
-  add_trace(y=~OtherNPV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
+  add_trace(y=~BidenNPV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~TrumpNPV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~OtherNPV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~HighBidenNPV,name='Biden High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
+  add_trace(y=~LowBidenNPV,name='Biden Low',type = 'scatter',mode='lines',
+    fill = 'tonexty',fillcolor='rgba(105,141,197,0.3)',
+    line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
+  add_trace(y=~HighTrumpNPV,name='Trump High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
+  add_trace(y=~LowTrumpNPV,name='Trump Low',type = 'scatter',mode='lines',
+    fill = 'tonexty',fillcolor='rgba(240,119,99,0.3)',
+    line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
   layout(margin = list(t=40),title = 'Popular vote over time',
          font=list(family='Futura', size=12.8),
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c("2020-07-26 00:38:14","2020-07-30 00:38:14"))),
+                      range = (c(as.character(min(nationalproj$Date)),"2020-08-04 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Average Popular vote %'),
          hovermode = "x unified",
-         hoverlabel = list(font = list(bgcolor='white',
-                                       family="Futura",
-                                       size = 12 )))
+         hoverlabel = list(font = list(family="Futura",
+                                       size = 13.5 ),bgcolor='white'))
 ```
 
 
@@ -832,6 +507,23 @@ plot_ly(evproj2,x=evproj2$Date) %>%
 ---
 
 ```{r, fig.width = 10, fig.asp = 0.37, out.width="960px", out.height="355.2px", fig.align ="center"}
+
+#Histogram
+finalEV <- read.csv("/Users/aditya/Desktop/2020 Forecast Data/finalEV")
+
+final_evs.gg <-  ggplot(data=finalEV,aes(x=BidenEV,
+                                    fill=ifelse(BidenEV>=270,'Biden Wins','Trump Wins'))) +
+  geom_vline(xintercept = 270) +
+  geom_histogram(binwidth=1) +
+  theme_minimal() +
+  theme(legend.position = 'top',
+        panel.grid.minor = element_blank()) +
+  scale_fill_manual(name='Legend',values=c('Biden Wins'='#698DC5','Trump Wins'='#F07763'))+
+  labs(x="Biden's Electoral College count",
+       y="Number of times outcome occurred",
+       title='A Histogram of electoral college Outcomes',
+       subtitle=sprintf("Biden wins the electoral college %s percent of times.",round(mean(finalEV$BidenEV>=270)*100,3)))
+
 ggplotly(final_evs.gg,) %>%
   config(displayModeBar = FALSE) %>%
   layout(title=" ",
@@ -851,7 +543,12 @@ ggplotly(final_evs.gg,) %>%
 ```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "center"} 
 
 #Box plots
-marginpercentiles <- arrange(marginpercentiles,V3)
+
+marginpercentiles <- simulations %>%
+  select("Name","MarginLow","MarginAverage","MarginHigh")
+
+marginpercentiles <- arrange(marginpercentiles,MarginAverage)
+
 marginpercentiles$ymin <- 1:56
 marginpercentiles$ymin <- marginpercentiles$ymin - 0.40
 marginpercentiles$ymax <- marginpercentiles$ymin + 0.80
@@ -859,19 +556,19 @@ marginpercentiles$ymax <- marginpercentiles$ymin + 0.80
 party_colors <- c("#698DC5","#F07763") 
 
 p0 <- ggplot(data = marginpercentiles,
-             mapping = aes(x = V3,
-                           y = reorder(V1,V3)))
+             mapping = aes(x = MarginAverage,
+                           y = reorder(Name,MarginAverage)))
 
 p1 <- p0 + geom_vline(xintercept = 0, color = "gray30") +
-  geom_point(shape=16,size = 2,color=ifelse(marginpercentiles$V3<0,"#698DC5","#F07763")) +
-  geom_rect(data=marginpercentiles, mapping=aes(xmin=ifelse(V2<0,V2,0), 
-                                                xmax=ifelse(V4<0,V4,0), 
+  geom_point(shape=16,size = 2,color=ifelse(marginpercentiles$MarginAverage<0,"#698DC5","#F07763")) +
+  geom_rect(data=marginpercentiles, mapping=aes(xmin=ifelse(MarginLow>0,MarginLow,0), 
+                                                xmax=ifelse(MarginHigh>0,MarginHigh,0), 
                                                 ymin=ymin,ymax=ymax,
-                                                fill="red"),color="black",alpha=0.2,show.legend = F) +
-  geom_rect(data=marginpercentiles, mapping=aes(xmin=ifelse(V2>0,V2,0), 
-                                                xmax=ifelse(V4>0,V4,0), 
+                                                fill="blue"),color="black",alpha=0.2,show.legend = F) +
+  geom_rect(data=marginpercentiles, mapping=aes(xmin=ifelse(MarginLow<0,MarginLow,0), 
+                                                xmax=ifelse(MarginHigh<0,MarginHigh,0), 
                                                 ymin=ymin,ymax=ymax,
-                                                fill="blue"),color="black",alpha=0.2,show.legend = F)
+                                                fill="red"),color="black",alpha=0.2,show.legend = F)
 
 p2 <- p1 + scale_color_manual(ifelse(marginpercentiles$V3<0,"#698DC5","#F07763"))
 
