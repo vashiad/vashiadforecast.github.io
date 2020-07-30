@@ -8,12 +8,116 @@ navbar:
       href: index.html
     - text: "State Forecasts"
       menu:
+      - text: "Swing States"
+      - text: "Colorado"
+        href: Colorado .html
+      - text: "Florida"
+        href: Florida .html
+      - text: "Georgia"
+        href: Georgia .html        
+      - text: "Iowa"
+        href: Iowa .html        
+      - text: "Maine"
+        href: Maine .html        
+      - text: "Maine 2nd"
+        href: Maine-02 .html        
+      - text: "Michigan"
+        href: Michigan .html        
+      - text: "Minnesota"
+        href: Minnesota .html        
+      - text: "Nevada"
+        href: Nevada .html
+      - text: "Nebraska 2nd"
+        href: Nebraska-02 .html     
+      - text: "New Hampshire"
+        href: New Hampshire .html          
+      - text: "North Carolina"
+        href: North Carolina .html          
+      - text: "Nevada"
+        href: Ohio .html          
+      - text: "Nevada"
+        href: Pennsylvania .html   
+      - text: "Nevada"
+        href: Texas .html           
+      - text: "Nevada"
+        href: Wisconsin .html           
+      - text: "---------"  
+      - text: "Other States"    
+      - text: "Alabama"
+        href: Alabama .html        
+      - text: "Alaska"
+        href: Alaska .html       
+      - text: "Arkansas"
+        href: Arkansas .html        
+      - text: "California"
+        href: California .html        
+      - text: "Connecticut"
+        href: Connecticut .html        
+      - text: "Delaware"
+        href: Delaware .html        
+      - text: "Washington DC"
+        href: District of Columbia .html        
+      - text: "Hawaii"
+        href: Hawaii .html        
+      - text: "Idaho"
+        href: Idaho .html        
+      - text: "Illinois"
+        href: Illinois .html        
+      - text: "Indiana"
+        href: Indiana .html        
+      - text: "Kansas"
+        href: Kansas .html        
+      - text: "Kentucky"
+        href: Kentucky .html        
+      - text: "Louisiana"
+        href: Louisiana .html        
+      - text: "Maine 2nd"
+        href: Maine-02 .html        
+      - text: "Maryland"
+        href: Maryland .html        
+      - text: "Massachusetts"
+        href: Massachusetts .html        
+      - text: "Mississippi"
+        href: Mississippi .html        
+      - text: "Missouri"
+        href: Missouri .html        
+      - text: "Montana"
+        href: Montana .html        
+      - text: "Nebraska"
+        href: Nebraska .html        
+      - text: "Nebraska 1st"
+        href: Nebraska-01 .html        
+      - text: "Nebraska 3rd"
+        href: Nebraska-03 .html        
       - text: "New Jersey"
-        href: NewJersey.html
+        href: New Jersey .html        
+      - text: "New Mexico"
+        href: New Mexico .html        
+      - text: "New York"
+        href: New York .html        
+      - text: "North Dakota"
+        href: North Dakota.html        
+      - text: "Oklahoma"
+        href: Oklahoma .html        
+      - text: "Oregon"
+        href: Oregon .html        
+      - text: "Rhode Island"
+        href: Rhode Island .html        
+      - text: "South Carolina"
+        href: South Carolina .html        
+      - text: "South Dakota"
+        href: South Dakota .html        
+      - text: "Tennessee"
+        href: Tennessee .html        
+      - text: "Utah"
+        href: Utah .html        
+      - text: "Vermont"
+        href: Vermont .html        
+      - text: "Washington"
+        href: Washington .html        
+      - text: "West Virginia"
+        href: West Virginia .html        
+      - text: "Wyoming"
+        href: Wyoming .html        
     - text: "About Me"
       href: about.html
-output:
-  html_document:
-    theme: default ## Preference
-    highlight: textmate ## Preference
-    css: styles.css ## custom CSS
