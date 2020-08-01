@@ -31,7 +31,7 @@ code.r{ /* Code block */
     font-size: 12px;
 }
 pre { /* Code block - determines code spacing between lines */
-    font-size: 14px;
+    font-size: 9px;
 }
 </style>
 
@@ -85,19 +85,38 @@ simulations2 <- simulations2 %>% drop_na()
 
 ### Geographic Map
 
-```{r,fig.width = 9.5, fig.asp = .61, fig.align = "left"}
+```{r}
 #knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
 nationalproj <- read.csv("~/Desktop/2020 Forecast Data/nationalcsv.csv")
 latestnational <- slice_max(nationalproj,order_by=Date,n=1)
 
-htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
+htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 32px; width: 900px; float: left;" id="Header">
 <img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
-<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestnational$BidenWinProb,1),round(latestnational$TrumpWinProb,1),
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 60px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 60px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestnational$BidenWinProb,1),round(latestnational$TrumpWinProb,1),
 latestnational$BidenWinProb,latestnational$TrumpWinProb))
 
 htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
 </div>')
+```
+
+<html>
+  <h3>Select a state to view a detailed forecast.</h3>
+  <select onchange="la(this.value)" style="font-family : Futura;
+ font-size : 13pt" >
+      <option value="index.html">National</option>
+      <option value="Alaska .html">Alaska</option>
+      <option value="Alabama .html">Alabama</option>
+      <option value="Arkansas .html">Arkansas</option>
+  </select>
+  <script>
+  function la(src){
+  window.location=src;
+  }
+  </script>
+</html>
+    
+```{r,fig.width = 9.5, fig.asp = .61, fig.align = "left"}
 
 ##### INTERACTIVE MAP ######
 #install.packages("remotes")
@@ -199,8 +218,8 @@ spatialdata2@data$hoverText <- mapply(
               <span style='float:left'>Biden</span>
               <span style='float:right'>Trump</span>
               <br/>
-              <span style='color:#698DC5;float:left'>%s%%</span>
-              <span style='color:#F07763;float:right'>%s%%</span><br clear='all'/>
+              <span style='color:#698DC5;float:left;font-weight:bold'>%s%%</span>
+              <span style='color:#F07763;float:right;font-weight:bold'>%s%%</span><br clear='all'/>
               <span style='background:#698DC5;width:%s%%;float:left'>&nbsp;</span>
               <span style='background:#F07763;width:%s%%;float:right'>&nbsp;</span>
             </div>
@@ -260,13 +279,7 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
     labelOptions = labelOptions(
       noHide = 'T', textOnly = T,
       offset=c(0,0), textsize = '12px',
-      style=list('color'='black')))  %>%
-  htmlwidgets::onRender(
-    "function(el, t) {
-        var myMap = this;
-        // get rid of the ugly grey background
-        myMap._container.style['background'] = '#ffffff';
-    }")
+      style=list('color'='black')))
 ```
 
 ### Tile Map
@@ -274,10 +287,10 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
 ```{r,fig.width = 9.5, fig.asp = .72, fig.align = "left"}
 #knitr::include_graphics(rep('/Users/aditya/Desktop/vashiadforecast.github.io/index_files/figure-html/BidenHead.png', 1))
 
-htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 22px; width: 900px; float: left;" id="Header">
+htmltools::HTML(sprintf('<div style="font-family:futura; font-size: 32px; width: 900px; float: left;" id="Header">
 <img src="BidenHead.png" alt="A picture of Joe Biden" style="width:110px;height:130px;float: left;"/>
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:105px;height:130px;float: right;"/>
-<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 50px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 50px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestnational$BidenWinProb,1),round(latestnational$TrumpWinProb,1),
+<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> <span style="font-size: 60px; color: #698dc5; float: left;"><strong>%s%%</strong></span> <span style="color: #f07763; font-size: 60px; float: right;"><strong>%s%%</strong></span><br clear="all" /> <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestnational$BidenWinProb,1),round(latestnational$TrumpWinProb,1),
 latestnational$BidenWinProb,latestnational$TrumpWinProb))
 
 htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; float: left;" id="Header"><br>Hover over each state to view state by state chances. 
@@ -540,7 +553,7 @@ ggplotly(final_evs.gg,) %>%
 
 ---
 
-```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "center"} 
+```{r, fig.width = 10, fig.asp = 2, out.width="960px", out.height="2040px", fig.align = "left"} 
 
 #Box plots
 
@@ -575,13 +588,13 @@ p2 <- p1 + scale_color_manual(ifelse(marginpercentiles$V3<0,"#698DC5","#F07763")
 p3 <- p2 + scale_x_continuous(breaks = c(-90, -75, -50, -25, 0, 25, 50),
                               labels = c("-90\n (Biden)", "-75", "-50","-25", "0", "25", "50\n(Trump)"),position = "top")
 
-p4 <- p3 + labs(x = "Margin of Victory", y = "State") +
-  theme(axis.text=element_text(size=8)) + theme_minimal()
+p4 <- p3 + labs(x = "Margin of Victory", y = " ") +
+  theme(axis.text=element_text(size=14)) + theme_minimal()
 
 ggplotly(p4)%>%
   config(displayModeBar = FALSE) %>%
   layout(margin = list(t=47),
-         xaxis=list(fixedrange=TRUE,side="top",size=16),
+         xaxis=list(fixedrange=TRUE,side="top",tickfont=list(size=14)),
          font = list(family='Futura', size=20),
          yaxis = list(fixedrange=TRUE,tickfont = list(size = 17)),
          showlegend=FALSE) %>%

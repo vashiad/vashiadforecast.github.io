@@ -3,7 +3,7 @@ output: html_document
 params:
   state: "OH"
   name: "Ohio"
-title: "`r params$name`"
+title: "Chances of winning `r params$name`"
 ---
 <style type="text/css">
 
@@ -68,6 +68,7 @@ library(usmap)
 library(formattable)
 library(kableExtra)
 library(egg)
+library(plotly)
 
 
 statesdata <- read.csv("~/Desktop/2020 Forecast Data/statescsv.csv")
@@ -85,12 +86,12 @@ stateresults <- function(state){
   latestresults <- slice_max(datawrangle,order_by=Date,n=1)
   header <- htmltools::HTML(
       sprintf(
-        '<div style="font-family:futura; font-size: 21px; width: 800px; float: left;">
+        '<div style="font-family:futura; font-size: 25px; width: 860px; float: left;">
 <img src="BidenHead.png" alt="A picture of Joe Biden" style="width:75px;height:92px;float: left;"/>
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:70px;height:92px;float: right;"/>
 <strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> 
-<span style="font-size: 32px; color: #698dc5; float: left;"><strong>%s%%</strong></span> 
-<span style="color: #f07763; font-size: 32px; float: right;"><strong>%s%%</strong></span><br clear="all" /> 
+<span style="font-size: 40px; color: #698dc5; float: left;"><strong>%s%%</strong></span> 
+<span style="color: #f07763; font-size: 40px; float: right;"><strong>%s%%</strong></span><br clear="all" /> 
 <span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> 
 <span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestresults$BidenStateWinProb, 1),
 round(latestresults$TrumpStateWinProb, 1),
@@ -124,25 +125,43 @@ electoralvotes <- function(state){
   return(result)
 }
 
+
+lastfive <- function(state){
+  data <- read.csv("/Users/aditya/Desktop/2020 Forecast Data/lastfiveresults.csv") %>%
+    filter(Abb.==state)
+  frame <- data.frame("Year" <- c("2000","2004","2008","2012","2016"),
+                         "Winner" <- c(as.character(data$X2000),as.character(data$X2004),as.character(data$X2008),as.character(data$X2012),as.character(data$X2016)))
+  colnames(frame) <- c("Year","Winner")
+  history <- frame %>%
+    mutate(Winner=cell_spec(Winner,color="white",bold=T,background = ifelse(Winner=="D","blue","red"))) %>%
+    kable(escape=F,align="c",caption=" Voting History",font_family="Futura") %>%
+    kable_styling("striped", full_width = F,font_size=14)
+  return(history)
+}
+
 table <- function(state){
   datawrangle <- statesdata %>%
   filter(Abb.==state) %>%
   arrange(desc(Date))
   latestresults <- slice_max(datawrangle,order_by=Date,n=1)
+  latestresults2 <- slice_max(datawrangle,order_by=Date,n=2)
   df <- data.frame(" " <- c("◾","◾","◾"), "Candidate" <- c("Joe Biden","Donald Trump","Others"),
-           "Projected voteshare"<-c(round(latestresults$BidenAverage,2),round(latestresults$TrumpAverage,2),round(latestresults$OtherAverage,2)))
-  colnames(df) <- c(" ","Candidate","Projected voteshare")
-  
+           "Projected voteshare"<-c(round(latestresults$FinalPredictedBiden,2),round(latestresults$FinalPredictedTrump,2),round(latestresults$FinalPredictedOther,2)),
+           "Change" <- c(round((latestresults2$FinalPredictedBiden[2]-latestresults2$FinalPredictedBiden[1]),1),
+                         round((latestresults2$FinalPredictedTrump[2]-latestresults2$FinalPredictedTrump[1]),1),
+                         round((latestresults2$FinalPredictedOther[2]-latestresults2$FinalPredictedOther[1]),1)))
+  colnames(df) <- c(" ","Candidate","Projected voteshare","Change")
   df %>%
       mutate(" " = cell_spec(" ", "html", background = ifelse(Candidate=="Joe Biden", "#698DC5", ifelse(Candidate=="Donald Trump","#F07763","#cf9800"))),
              `Projected voteshare`= ifelse(Candidate=="Joe Biden",color_bar("#cdcefa")(`Projected voteshare`),
-                                         ifelse(Candidate=="Donald Trump",color_bar("#fcc7c0")(`Projected voteshare`),color_bar("#f7e3ab")(`Projected voteshare`)))) %>%
+                                         ifelse(Candidate=="Donald Trump",color_bar("#fcc7c0")(`Projected voteshare`),color_bar("#f7e3ab")(`Projected voteshare`))),
+             "Change" = cell_spec(Change, color=ifelse(Change>=0,"green","red"))) %>%
     kable("html",escape = F,align="r",position="left") %>%
-    kable_styling("hover", full_width = F, font_size = 15) %>%
-    row_spec(1, bold = T, color = NULL, background = "white", align="r") %>%
-    row_spec(2, bold = T, color = NULL, background = "white", align="r") %>%
-    row_spec(3, bold = T, color = NULL, background = "white", align="r") %>%
-    column_spec(2, width = "2.5cm", bold=T)
+    kable_styling("hover", full_width = F, font_size = 18) %>%
+    row_spec(1,bold = T, color = NULL, background = "white", align="r", font_size = 18) %>%
+    row_spec(2,bold = T, color = NULL, background = "white", align="r", font_size = 18) %>%
+    row_spec(3,bold = T, color = NULL, background = "white", align="r", font_size = 18) %>%
+    column_spec(2, width = "2.65cm", bold=T)
 }
 
 # #c(round(mean(bidenstateresults[,c(state)]),2)/100,
@@ -179,9 +198,9 @@ statevoteshare <- function(state){
     filter(Abb.==state)
   plot <- plot_ly(statevoteshare,x=statevoteshare$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~BidenAverage,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
-  add_trace(y=~TrumpAverage,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
-  add_trace(y=~OtherAverage,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalPredictedOther,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
   add_trace(y=~BidenHigh,name='Biden High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
   add_trace(y=~BidenLow,name='Biden Low',type = 'scatter',mode='lines',
     fill = 'tonexty',fillcolor='rgba(105,141,197,0.3)',
@@ -225,35 +244,35 @@ densityplot <- function(state){
 
 ```
 
----
 
 ```{r,fig.align = "center",out.width="100%"}
 stateresults(params$state)
 ```
 
+<div class="container-fluid">
 <div class = "row">
-<div class = "col-sm-4">
+  <div class = "col-sm-5">
 
-```{r,fig.align="left", fig.width=6, fig.height=2.7,out.width="100%"}
+```{r,fig.align="center",out.width="100%"}
 table(params$state)
 ```
-
-</div>
-
-<div class = "col-sm-4">
-```{r,fig.align="center", fig.width=1.3, fig.height=1.3,out.width="70%"}
+  </div>
+  <div class = "col-sm-2">
+```{r,fig.align="center", out.width="100%"}
 maptile(params$state)
 ```
-
-</div>
-
-<div class = "col-sm-4">
-```{r,fig.align="left", out.width="100%"}
+  </div>
+  <div class = "col-sm-2">
+```{r,fig.align="center", out.width="100%"}
 electoralvotes(params$state)
 ```
-
+  </div>
+  <div class = "col-sm-3">
+```{r,fig.align="center", out.width="100%"}
+lastfive(params$state)
+```
+  </div>
 </div>
-
 </div>
 
 ---
@@ -281,3 +300,21 @@ statevoteshare(params$state)
 ```
 
 ##
+
+
+<html>
+  <h3>Other States:</h3>
+  <select onchange="la(this.value)" style="font-family : Futura;
+ font-size : 13pt" >
+      <option value="index.html">National</option>
+      <option value="Alaska .html">Alaska</option>
+      <option value="Alabama .html">Alabama</option>
+      <option value="Arkansas .html">Arkansas</option>
+  </select>
+  <script>
+  function la(src){
+  window.location=src;
+  }
+  </script>
+</html>
+
