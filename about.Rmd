@@ -1,5 +1,43 @@
 ---
-title: "about.Rmd"
+title: "Methodolody"
+output: html_document
 ---
 
-About the project
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 23px;
+  font-family: "Futura"
+}
+h1.title {
+  font-size: 34px;
+  font-family: "Futura";
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+  font-family: "Futura";
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+  font-family: "Futura";
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 9px;
+}
+</style>
+
+
+How does the model work?
+Coming soon!
+
+Credits
+Coming soon!

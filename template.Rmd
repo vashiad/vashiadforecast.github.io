@@ -11,7 +11,7 @@ body{ /* Normal  */
       font-size: 12px;
   }
 td {  /* Table  */
-  font-size: 14px;
+  font-size: 15.5px;
   font-family: "Futura"
 }
 h1.title {
@@ -30,6 +30,11 @@ h3 { /* Header 3 */
   font-size: 18px;
   font-family: "Futura";
 }
+caption {
+font-family: "Futura";
+font-weight: bold;
+font-size: 17px
+} 
 code.r{ /* Code block */
     font-size: 12px;
 }
@@ -51,7 +56,22 @@ pre { /* Code block - determines code spacing between lines */
     -webkit-columns: 3 100px;
     -moz-columns: 3 100px;
   }
+  .column {
+  float: left;
+  width: 32%;
+  margin: 20px 1.15%;
+  height: 230px;
+  background-color: #ffffff;
+}
+.column2 {
+  float: left;
+  width: 50%;
+  margin: 20px 1.15%;
+  height: 230px;
+  background-color: #ffffff;
+}
 </style>
+
 
 
 ```{r include = FALSE}
@@ -86,14 +106,15 @@ stateresults <- function(state){
   latestresults <- slice_max(datawrangle,order_by=Date,n=1)
   header <- htmltools::HTML(
       sprintf(
-        '<div style="font-family:futura; font-size: 25px; width: 860px; float: left;">
+        '<div class="container-fluid"/>
+        <style="font-family:futura; font-size: 25px; width: 820px; float: left;"/>
 <img src="BidenHead.png" alt="A picture of Joe Biden" style="width:75px;height:92px;float: left;"/>
 <img src="TrumpHead.png" alt="A picture of Donald Trump" style="width:70px;height:92px;float: right;"/>
-<strong>Biden</strong></span> <span style="float: right;"><strong>Trump</strong></span> <br /> 
-<span style="font-size: 40px; color: #698dc5; float: left;"><strong>%s%%</strong></span> 
-<span style="color: #f07763; font-size: 40px; float: right;"><strong>%s%%</strong></span><br clear="all" /> 
-<span style="background: #698DC5; width: %s%%; float: left;">&nbsp;</span> 
-<span style="background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestresults$BidenStateWinProb, 1),
+<span style="font-family:futura; font-size: 25px;"><strong>Biden</strong></span> <span style="font-family:futura; font-size: 25px;float: right;"><strong>Trump</strong></span><br/> 
+<span style="font-family:futura;font-size: 34px; color: #698dc5;"><strong>%s%%</strong></span> 
+<span style="font-family:futura;color: #f07763; font-size: 34px; float: right;"><strong>%s%%</strong></span><br clear="all" /> 
+<span style="font-size: 25px;background: #698DC5; width: %s%%; float: left;">&nbsp;</span> 
+<span style="font-size: 25px;background: #F07763; width: %s%%; float: right;">&nbsp;</span></div>',round(latestresults$BidenStateWinProb, 1),
 round(latestresults$TrumpStateWinProb, 1),
 latestresults$BidenStateWinProb,
 latestresults$TrumpStateWinProb
@@ -119,23 +140,28 @@ electoralvotes <- function(state){
   latestresults <- slice_max(datawrangle,order_by=Date,n=1)
   result <- htmltools::HTML(
       sprintf(
-        '<div style="font-family:futura; font-size: 23px; width: 150px; text-align: center;"><span style="font-size:95px;font-weight:bold;text-align: center;">%s</span><br/> Electoral Votes</div>',latestresults$EV.s
+        '<div class="boxed" style="align-items: center;width: 230px; padding: 3px; border-width: 3.5px; border-color: gray;"><span style="font-family:futura;font-size:95px;font-weight:bold;text-align: center;color:%s;">%s</span><br/> <span style="align-items: center;font-family:futura;font-size:23px;font-weight:bold;text-align: center;"</span> Electoral<br/>Votes </div>',ifelse(latestresults$MarginAverage<0,"#698DC5","#F07763"),latestresults$EV.s
       )
     )
   return(result)
 }
 
+#Wrangle data
 
 lastfive <- function(state){
+  histdata <- read.csv("/Users/aditya/Desktop/2020 Forecast Data/histmargindata.csv") %>%
+    filter(Name==state)
   data <- read.csv("/Users/aditya/Desktop/2020 Forecast Data/lastfiveresults.csv") %>%
     filter(Abb.==state)
   frame <- data.frame("Year" <- c("2000","2004","2008","2012","2016"),
-                         "Winner" <- c(as.character(data$X2000),as.character(data$X2004),as.character(data$X2008),as.character(data$X2012),as.character(data$X2016)))
-  colnames(frame) <- c("Year","Winner")
+                         "Winner" <- c(as.character(data$X2000),as.character(data$X2004),as.character(data$X2008),as.character(data$X2012),as.character(data$X2016)),
+                      "Margin" <-c(round(histdata$Margin,2)))
+  colnames(frame) <- c("Year","Winner","Margin")
   history <- frame %>%
-    mutate(Winner=cell_spec(Winner,color="white",bold=T,background = ifelse(Winner=="D","blue","red"))) %>%
+    mutate(Winner=cell_spec(Winner,color="white",bold=T,background = ifelse(Winner=="D","blue","red")),
+           Margin=cell_spec(Margin,color=ifelse(Margin<0,"blue","red"))) %>%
     kable(escape=F,align="c",caption=" Voting History",font_family="Futura") %>%
-    kable_styling("striped", full_width = F,font_size=14)
+    kable_styling("striped", full_width = F,font_size=16)
   return(history)
 }
 
@@ -161,7 +187,7 @@ table <- function(state){
     row_spec(1,bold = T, color = NULL, background = "white", align="r", font_size = 18) %>%
     row_spec(2,bold = T, color = NULL, background = "white", align="r", font_size = 18) %>%
     row_spec(3,bold = T, color = NULL, background = "white", align="r", font_size = 18) %>%
-    column_spec(2, width = "2.65cm", bold=T)
+    column_spec(2, width = "3cm", bold=T)
 }
 
 # #c(round(mean(bidenstateresults[,c(state)]),2)/100,
@@ -176,8 +202,8 @@ statechances <- function(state){
     filter(Abb.==state)
   plot <- plot_ly(statechances,x=statechances$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84)) %>%
-  add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84)) %>%
+  add_trace(y=~BidenStateWinProb,name='Biden',mode='lines',line=list(color='blue',width=2.84)) %>%
+  add_trace(y=~TrumpStateWinProb,name='Trump',mode='lines',line=list(color='red',width=2.84)) %>%
   add_trace(y=~OtherStateWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84)) %>%
   layout(margin = list(t=40),title = paste('Chances of winning',state,'over time'),
          font=list(family='Futura', size=12.8),
@@ -198,8 +224,8 @@ statevoteshare <- function(state){
     filter(Abb.==state)
   plot <- plot_ly(statevoteshare,x=statevoteshare$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
-  add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalPredictedBiden,name='Biden',mode='lines',line=list(color='blue',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalPredictedTrump,name='Trump',mode='lines',line=list(color='red',width=2.84),hoverinfo="y") %>%
   add_trace(y=~FinalPredictedOther,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
   add_trace(y=~BidenHigh,name='Biden High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
   add_trace(y=~BidenLow,name='Biden Low',type = 'scatter',mode='lines',
@@ -244,30 +270,40 @@ densityplot <- function(state){
 
 ```
 
-
 ```{r,fig.align = "center",out.width="100%"}
 stateresults(params$state)
 ```
 
-<div class="container-fluid">
-<div class = "row">
-  <div class = "col-sm-5">
-
-```{r,fig.align="center",out.width="100%"}
-table(params$state)
-```
-  </div>
-  <div class = "col-sm-2">
-```{r,fig.align="center", out.width="100%"}
-maptile(params$state)
-```
-  </div>
-  <div class = "col-sm-2">
+<div class="container-fluid>
+<div class="row">
+  <div class="col-md-3">
 ```{r,fig.align="center", out.width="100%"}
 electoralvotes(params$state)
 ```
   </div>
-  <div class = "col-sm-3">
+  <div class="col-md-6">
+```{r,fig.align="left",out.width="100%"}
+table(params$state)
+```
+  </div>
+  <div class="col-md-3">
+```{r,fig.align="center", out.width="100%"}
+maptile(params$state)
+```
+  </div>
+</div>
+</div>
+
+---
+
+<div class="container-fluid>
+<div class="row">
+  <div class="col-md-9">
+```{r,fig.align="center", out.width="100%", fig.height=2.7}
+densityplot(params$state)
+```
+  </div>
+  <div class="col-md-3">
 ```{r,fig.align="center", out.width="100%"}
 lastfive(params$state)
 ```
@@ -277,29 +313,25 @@ lastfive(params$state)
 
 ---
 
-```{r,fig.align="center", fig.width=2, fig.height=1.95,out.width="75%"}
-densityplot(params$state)
-```
-
----
-
 # How has the race changed over time?
 
 ##  {.tabset .tabset-fade .tabset-pills}
 
 ### Chance of winning
 
-```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+```{r,out.width="100%",out.height="50%",fig.align = "center"}
 statechances(params$state)
 ```
 
 ### Projected voteshare
 
-```{r,fig.width = 10, fig.asp = 0.47, out.width="700px", out.height="345.2px", fig.align = "center"}
+```{r,out.width="100%", fig.align = "center"}
 statevoteshare(params$state)
 ```
 
 ##
+
+---
 
 
 <html>

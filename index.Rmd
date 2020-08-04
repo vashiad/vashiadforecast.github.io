@@ -35,6 +35,7 @@ pre { /* Code block - determines code spacing between lines */
 }
 </style>
 
+
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo=FALSE,message=FALSE,warning=FALSE)
 knitr::opts_knit$set(root.dir = '/Users/aditya/Desktop/2020 Forecast Data')
@@ -254,23 +255,24 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
               fillColor= ~factpal(who), fill = T, opacity = 1,
               fillOpacity = ~ifelse(spatialdata2@data$TrumpStateWinProb<=10,1,
                                     ifelse(spatialdata2@data$TrumpStateWinProb<=20,.80,
-                                           ifelse(spatialdata2@data$TrumpStateWinProb<=30,.40,
-                                                  ifelse(spatialdata2@data$TrumpStateWinProb<=40,.20,
+                                           ifelse(spatialdata2@data$TrumpStateWinProb<=30,.65,
+                                                  ifelse(spatialdata2@data$TrumpStateWinProb<=40,.30,
                                                          ifelse(spatialdata2@data$TrumpStateWinProb<=50,.15,
                                                                 ifelse(spatialdata2@data$TrumpStateWinProb<=60,.15,
-                                                                       ifelse(spatialdata2@data$TrumpStateWinProb<=70,.20,
-                                                                              ifelse(spatialdata2@data$TrumpStateWinProb<=80,.40,
+                                                                       ifelse(spatialdata2@data$TrumpStateWinProb<=70,.30,
+                                                                              ifelse(spatialdata2@data$TrumpStateWinProb<=80,.65,
                                                                                      ifelse(spatialdata2@data$TrumpStateWinProb<=90,.80,1))))))))),
               label=~hoverText,
-              labelOptions = labelOptions(offset = c(-70,-30),
+              labelOptions = labelOptions(offset = c(-30,-50),
                                           #direction='bottom',
                                           textOnly = T,
                                           style=list(
-                                            'background'='rgba(255,255,255,0.95)',
-                                            'border-color' = 'rgba(0,0,0,1)',
+                                            'background'='rgba(0, 0, 0, 1)',
+                                            'border-color' = 'gray',
                                             'border-radius' = '4px',
                                             'border-style' = 'solid',
-                                            'border-width' = '4px')),
+                                            'border-width' = '4px',
+                                            'color' = 'white')),
               highlightOptions = highlightOptions(weight = 3, bringToFront = TRUE)) %>%
   setView(lng = -98.5795,lat = 40.083, zoom = 3.4) %>%
   addLabelOnlyMarkers(
@@ -279,7 +281,13 @@ leaflet(spatialdata2,options=leafletOptions(crs = crs.laea,
     labelOptions = labelOptions(
       noHide = 'T', textOnly = T,
       offset=c(0,0), textsize = '12px',
-      style=list('color'='black')))
+      style=list('color'='black'))) %>%
+    htmlwidgets::onRender(
+    "function(el, t) {
+        var myMap = this;
+        // get rid of the ugly grey background
+        myMap._container.style['background'] = '#ffffff';
+    }")
 ```
 
 ### Tile Map
@@ -437,8 +445,8 @@ nationalproj$Date <- lubridate::as_datetime(nationalproj$Date)
 
 plot_ly(nationalproj,x=nationalproj$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~FinalBidenEV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
-  add_trace(y=~FinalTrumpEV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalBidenEV,name='Biden',mode='lines',line=list(color='blue',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~FinalTrumpEV,name='Trump',mode='lines',line=list(color='red',width=2.84),hoverinfo="y") %>%
   add_trace(y=~FinalOtherEV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
   add_trace(y=~HighBidenEV,name='Biden High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
   add_trace(y=~LowBidenEV,name='Biden Low',type = 'scatter',mode='lines',
@@ -467,8 +475,8 @@ plot_ly(nationalproj,x=nationalproj$Date) %>%
 
 plot_ly(nationalproj,x=nationalproj$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~BidenWinProb,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
-  add_trace(y=~TrumpWinProb,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~BidenWinProb,name='Biden',mode='lines',line=list(color='blue',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~TrumpWinProb,name='Trump',mode='lines',line=list(color='red',width=2.84),hoverinfo="y") %>%
   add_trace(y=~OtherWinProb,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
   layout(margin = list(t=40),title = 'Chances of winning over time',
          font=list(family='Futura', size=12.8),
@@ -488,8 +496,8 @@ plot_ly(nationalproj,x=nationalproj$Date) %>%
 
 plot_ly(nationalproj,x=nationalproj$Date) %>%
   config(displayModeBar = FALSE) %>%
-  add_trace(y=~BidenNPV,name='Biden',mode='lines',line=list(color='rgb(105,141,197)',width=2.84),hoverinfo="y") %>%
-  add_trace(y=~TrumpNPV,name='Trump',mode='lines',line=list(color='rgb(240,119,99)',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~BidenNPV,name='Biden',mode='lines',line=list(color='blue',width=2.84),hoverinfo="y") %>%
+  add_trace(y=~TrumpNPV,name='Trump',mode='lines',line=list(color='red',width=2.84),hoverinfo="y") %>%
   add_trace(y=~OtherNPV,name='Others',mode='lines',line=list(color='rgb(207,152,0)',width=2.84),hoverinfo="y") %>%
   add_trace(y=~HighBidenNPV,name='Biden High',type = 'scatter',mode='lines',line = list(color = 'transparent'),showlegend = FALSE,hoverinfo='none') %>%
   add_trace(y=~LowBidenNPV,name='Biden Low',type = 'scatter',mode='lines',
