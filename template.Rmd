@@ -3,7 +3,8 @@ output: html_document
 params:
   state: "OH"
   name: "Ohio"
-title: "Chances of winning `r params$name`"
+  votes: "18"
+title: "Chances of winning `r params$name` (`r params$votes` EV)"
 ---
 <style type="text/css">
 
@@ -15,7 +16,7 @@ td {  /* Table  */
   font-family: "Futura"
 }
 h1.title {
-  font-size: 37px;
+  font-size: 27px;
   font-family: "Futura";
 }
 h1 { /* Header 1 */
@@ -123,28 +124,28 @@ latestresults$TrumpStateWinProb
   return(header)
 }
 
-maptile <- function(state){
-  datawrangle <- statesdata %>%
-    filter(Abb.==state) %>%
-    arrange(desc(Date))
-  latestresults <- slice_max(datawrangle,order_by=Date,n=1)
-  statefig <- plot_usmap(include=state, color = "#000000",size=1.15,
-                         fill=ifelse(latestresults$MarginAverage<0,"#698DC5","#F07763"))
-  return(statefig)
-}
+# maptile <- function(state){
+#   datawrangle <- statesdata %>%
+#     filter(Abb.==state) %>%
+#     arrange(desc(Date))
+#   latestresults <- slice_max(datawrangle,order_by=Date,n=1)
+#   statefig <- plot_usmap(include=state, color = "#000000",size=1.15,
+#                          fill=ifelse(latestresults$MarginAverage<0,"#698DC5","#F07763"))
+#   return(statefig)
+# }
 
-electoralvotes <- function(state){
-  datawrangle <- statesdata %>%
-    filter(Abb.==state) %>%
-    arrange(desc(Date))
-  latestresults <- slice_max(datawrangle,order_by=Date,n=1)
-  result <- htmltools::HTML(
-      sprintf(
-        '<div class="boxed" style="align-items: center;width: 230px; padding: 3px; border-width: 3.5px; border-color: gray;"><span style="font-family:futura;font-size:95px;font-weight:bold;text-align: center;color:%s;">%s</span><br/> <span style="align-items: center;font-family:futura;font-size:23px;font-weight:bold;text-align: center;"</span> Electoral<br/>Votes </div>',ifelse(latestresults$MarginAverage<0,"#698DC5","#F07763"),latestresults$EV.s
-      )
-    )
-  return(result)
-}
+# electoralvotes <- function(state){
+#   datawrangle <- statesdata %>%
+#     filter(Abb.==state) %>%
+#     arrange(desc(Date))
+#   latestresults <- slice_max(datawrangle,order_by=Date,n=1)
+#   result <- htmltools::HTML(
+#       sprintf(
+#         '<div class="boxed" style="align-items: center ;width: 230px; padding: 3px; border-width: 3.5px; border-color: gray;"><span style="font-family:futura;font-size:95px;font-weight:bold;text-align: center;color:%s;">%s</span><br/> <span style="align-items: center;font-family:futura;font-size:23px;font-weight:bold;text-align: center;"</span> Electoral<br/>Votes </div>',ifelse(latestresults$MarginAverage<0,"#698DC5","#F07763"),latestresults$EV.s
+#       )
+#     )
+#   return(result)
+# }
 
 #Wrangle data
 
@@ -210,7 +211,7 @@ statechances <- function(state){
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c(as.character(min(statesdata$Date)),"2020-08-04 00:38:14"))),
+                      range = (c(as.character(min(statesdata$Date)),"2020-09-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Probability'),
          hovermode = "x unified",
          hoverlabel = list(font = list(family="Futura",
@@ -240,7 +241,7 @@ statevoteshare <- function(state){
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c(as.character(min(statesdata$Date)),"2020-08-04 00:38:14"))),
+                      range = (c(as.character(min(statesdata$Date)),"2020-09-30 00:38:14"))),
          yaxis = list(hoverformat=".2f",fixedrange=TRUE,title = 'Probability'),
          hovermode = "x unified",
          hoverlabel = list(font = list(family="Futura",
@@ -276,34 +277,12 @@ stateresults(params$state)
 
 <div class="container-fluid>
 <div class="row">
-  <div class="col-md-3">
-```{r,fig.align="center", out.width="100%"}
-electoralvotes(params$state)
-```
-  </div>
-  <div class="col-md-6">
+  <div class="col-md-8">
 ```{r,fig.align="left",out.width="100%"}
 table(params$state)
 ```
   </div>
-  <div class="col-md-3">
-```{r,fig.align="center", out.width="100%"}
-maptile(params$state)
-```
-  </div>
-</div>
-</div>
-
----
-
-<div class="container-fluid>
-<div class="row">
-  <div class="col-md-9">
-```{r,fig.align="center", out.width="100%", fig.height=2.7}
-densityplot(params$state)
-```
-  </div>
-  <div class="col-md-3">
+  <div class="col-md-4">
 ```{r,fig.align="center", out.width="100%"}
 lastfive(params$state)
 ```
@@ -313,19 +292,31 @@ lastfive(params$state)
 
 ---
 
-# How has the race changed over time?
+<div class="container-fluid>
+<div class="row">
+  <div class="col-md-12">
+```{r,fig.align="center", out.width="100%", fig.height=2.7}
+densityplot(params$state)
+```
+  </div>
+</div>
+</div>
+
+---
+
+#  How has the race changed over time?
 
 ##  {.tabset .tabset-fade .tabset-pills}
 
 ### Chance of winning
 
-```{r,out.width="100%",out.height="50%",fig.align = "center"}
+```{r,out.width="90%",out.height="50%",fig.align = "center"}
 statechances(params$state)
 ```
 
 ### Projected voteshare
 
-```{r,out.width="100%", fig.align = "center"}
+```{r,out.width="90%", fig.align = "center"}
 statevoteshare(params$state)
 ```
 
@@ -339,9 +330,10 @@ statevoteshare(params$state)
   <select onchange="la(this.value)" style="font-family : Futura;
  font-size : 13pt" >
       <option value="index.html">National</option>
-      <option value="Alaska .html">Alaska</option>
-      <option value="Alabama .html">Alabama</option>
-      <option value="Arkansas .html">Arkansas</option>
+      <option value="Alaska.html">Alaska</option>
+      <option value="Alabama.html">Alabama</option>
+      <option value="Arkansas.html">Arkansas</option>
+      
   </select>
   <script>
   function la(src){

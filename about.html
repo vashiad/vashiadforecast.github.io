@@ -23,6 +23,7 @@
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
 <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
 
@@ -368,22 +369,25 @@ $(document).ready(function () {
 <style type="text/css">
 
 body{ /* Normal  */
-      font-size: 12px;
+      font-size: 14px;
+      font-family: "Futura";
   }
 td {  /* Table  */
-  font-size: 23px;
+  font-size: 14px;
   font-family: "Futura"
 }
 h1.title {
-  font-size: 34px;
+  font-size: 37px;
   font-family: "Futura";
 }
 h1 { /* Header 1 */
-  font-size: 28px;
+  font-size: 29px;
   font-family: "Futura";
+  font-weight: bold;
 }
 h2 { /* Header 2 */
     font-size: 22px;
+    font-family: "Futura";
 }
 h3 { /* Header 3 */
   font-size: 18px;
@@ -396,8 +400,70 @@ pre { /* Code block - determines code spacing between lines */
     font-size: 9px;
 }
 </style>
-<p>How does the model work? Coming soon!</p>
-<p>Credits Coming soon!</p>
+<hr />
+<div id="i.-collecting-and-adjusting-the-polling-data" class="section level1">
+<h1>I. Collecting and Adjusting the Polling Data</h1>
+<p>We start by collecting polls on the general election. Each poll is given a specific rating based on a number of characteristics. Recency bias, sample size, and the type of respondents (likely voters, registered voters, and all voters) are taken into account when determining the weight of each poll. Each poll is also rated partially based on FiveThirtyEight’s pollster ratings ranging from A to F. For example, a rating of A+ or A tells us the poll is from a reputable polling agency. Most of the polls have a B/C rating.</p>
+<p>All of the ratings given to the polls are combined to form an aggregate rating. All of the polls are combined to get an aggregate weighted average.</p>
+<div id="how-we-weight-the-polls" class="section level2">
+<h2>How we weight the polls</h2>
+<table class="table table-hover" style="font-size: 14px; width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Characteristic
+</th>
+<th style="text-align:left;">
+Ratings
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Recency
+</td>
+<td style="text-align:left;">
+Each poll is given a rating based on how closed it was conducted to Election Day. Polls closer to Election Day are given more weight. Polls farther away from Election Day are given a little less weight. The recency ratings are modeled on a polynomial curve to give polls closer to Election Day greater emphasis.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Sample Size
+</td>
+<td style="text-align:left;">
+If a poll has a bigger sample size, it has a higher rating. However, we make sure to follow the Law of Diminishing Returns. As a result, the sample size rating is modeled on a natural logarithmic curve.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Type of Respondents
+</td>
+<td style="text-align:left;">
+If a poll’s respondents are composed of likely and registered voters, it gets a rating boost compared to polls subjected to polling all voters.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-weight: bold;">
+Pollster Grade
+</td>
+<td style="text-align:left;">
+We use FiveThirtyEight’s pollster ratings to add and deduct points from specific pollsters. Polls with a grade of ‘F’ are discarded entirely.
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="ii.-projecting-the-vote" class="section level1">
+<h1>II. Projecting the Vote</h1>
+</div>
+<div id="iii.-simulating-the-election" class="section level1">
+<h1>III. Simulating the election</h1>
+</div>
+<div id="iv.-credits" class="section level1">
+<h1>IV. Credits</h1>
+</div>
 
 
 

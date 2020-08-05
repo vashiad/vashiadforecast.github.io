@@ -1,4 +1,4 @@
-name: "personal-website"
+name: "Electoral Chess"
 output_dir: "."
 navbar:
   title: <p style="font-family:futura;font-size:17px">Electoral Chess</p>

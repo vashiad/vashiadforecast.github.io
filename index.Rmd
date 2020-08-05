@@ -106,9 +106,9 @@ htmltools::HTML('<div style="font-family:futura; font-size: 17px; width: 900px; 
   <select onchange="la(this.value)" style="font-family : Futura;
  font-size : 13pt" >
       <option value="index.html">National</option>
-      <option value="Alaska .html">Alaska</option>
-      <option value="Alabama .html">Alabama</option>
-      <option value="Arkansas .html">Arkansas</option>
+      <option value="Alaska.html">Alaska</option>
+      <option value="Alabama.html">Alabama</option>
+      <option value="Arkansas.html">Arkansas</option>
   </select>
   <script>
   function la(src){
@@ -461,7 +461,7 @@ plot_ly(nationalproj,x=nationalproj$Date) %>%
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c(as.character(min(nationalproj$Date)),"2020-08-04 00:38:14"))),
+                      range = (c(as.character(min(nationalproj$Date)),"2020-09-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Average electoral votes'),
          hovermode = "x unified",
          hoverlabel = list(font = list(family="Futura",
@@ -483,7 +483,7 @@ plot_ly(nationalproj,x=nationalproj$Date) %>%
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c(as.character(min(nationalproj$Date)),"2020-08-04 00:38:14"))),
+                      range = (c(as.character(min(nationalproj$Date)),"2020-09-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Probability'),
          hovermode = "x unified",
          hoverlabel = list(font = list(family="Futura",
@@ -512,7 +512,7 @@ plot_ly(nationalproj,x=nationalproj$Date) %>%
          xaxis = list(fixedrange=TRUE,title = 'Date',
                       zeroline = TRUE,spikecolor="black",
                       spikethickness=2,
-                      range = (c(as.character(min(nationalproj$Date)),"2020-08-04 00:38:14"))),
+                      range = (c(as.character(min(nationalproj$Date)),"2020-09-30 00:38:14"))),
          yaxis = list(fixedrange=TRUE,title = 'Average Popular vote %'),
          hovermode = "x unified",
          hoverlabel = list(font = list(family="Futura",
